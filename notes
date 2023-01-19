@@ -1,0 +1,96 @@
+SAMD21:
+  .platformio/packages/framework-arduino-samd-seeed/variants/XIAO_m0
+    BUTTON_PIN    A1<- PIN_A1 <- 1ul
+    LED_PIN       LED_BUILTIN <- PIN_LED <- 13u 
+    BUZZER_PIN    A3<- PIN_A3 <- 3ul
+    DAC_PIN       A0<- PIN_A0 <- 0ul   (PIN_DAC0, DAC0)
+    ADC_PIN       A2<- PIN_A2 <- 2ul
+    PIN_WIRE_SCL  5u   SCL <- PIN_WIRE_SCL
+    PIN_WIRE_SDA  4u   SDA <- PIN_WIRE_SDA
+
+RP2040:
+  .platformio/packages/framework-arduinopico/variants/xeeed_xiao_rp2040
+    BUTTON_PIN    A1<-27u
+    LED_PIN       LED_BUILTIN <- PIN_LED <- 17u   should be 25u?
+    BUZZER_PIN    A3<-29u
+    DAC_PIN       A0<-26u
+    ADC_PIN       A2<-28u
+    PIN_WIRE0_SCL 7u  ->SCL->I2C_SCL
+    PIN_WIRE0_SDA 6u  ->SDA->I2C_SDA
+    PIN_WIRE1_SCL 31u   oops
+    PIN_WIRE1_SDA 31u   oops
+    no DAC ???
+
+RP2040:
+  .platformio/packages/framework-arduino-mbed/variants/RASPBERRY_PI_PICO
+    BUTTON_PIN    A1<- PIN_A1 <-27u
+    LED_PIN       LED_BUILTIN <- PIN_LED <- 25u   (digitalPinToPinName(p)(
+    BUZZER_PIN    A3<- PIN_A3 <-29u
+    DAC_PIN       A0<- PIN_A0 <- 26u
+    ADC_PIN       A2<- PIN_A2 <- 28u
+    PIN_WIRE_SCL  5u   I2C_SCL <- digitalPinToPinName(PIN_WIRE_SCL) ??? 7u
+    PIN_WIRE_SDA  4u   I2C_SDA <- digitalPinToPinName(PIN_WIRE_SDA) ??? 6u
+    no DAC ???
+
+ESP32C3:
+  .platformio/packages/framework-arduinoespressif32/variants/XIAO_ESP32C3
+    BUTTON_PIN    D1==A1<-3
+    LED_PIN       (none)
+    BUZZER_PIN    A3==D3<-5
+    DAC_PIN       A0==D0<-2
+    ADC_PIN       A2==D2<-4
+    PIN_WIRE_SCL     SCL==D5<-7
+    PIN_WIRE_SDA     SDA==D4<-6
+    no DAC ???
+
+nRF52840:
+
+
+seeed_xiao:         works
+pico_future:        works board =seed_xiao_rp2040
+pico:               no i2C
+seeed_wio_terminal:
+seeed_xiao_esp32c3: works but button interrupt didn't work
+                          interrupt with FALLING works, LOW does not?
+                          need to figure out analog read/write
+			  Serial does not wait at beginning???
+
+Interrupt FALLING:
+   esp32c3:     seems clean, no bouncing?
+   xiao:        seems clean, no bouncing?
+   pico_future: seems clean, no bouncing?
+Interrupt LOW:   (note ESP32 uses ONLOW?)
+   pico_future: lots of counts in interrupt when switch occurs
+   xiao:        lots of counts in interrupt when switch occurs
+   esp32c3:     no interrupt processed, no counts?  continuous?
+
+
+.platformio/packages/framework-arduinoespressif32@3.20005.220925/cores/esp32:
+from esp32-hal-gpio.h:
+#define DISABLED  0x00
+#define RISING    0x01
+#define FALLING   0x02
+#define CHANGE    0x03
+#define ONLOW     0x04
+#define ONHIGH    0x05
+#define ONLOW_WE  0x0C
+#define ONHIGH_WE 0x0D
+
+from Arduino.h:
+//Interrupt Modes
+#define RISING    0x01
+#define FALLING   0x02
+#define CHANGE    0x03
+#define ONLOW     0x04
+#define ONHIGH    0x05
+#define ONLOW_WE  0x0C
+#define ONHIGH_WE 0x0D
+
+.platformio/packages/framework-arduino-samd-seeed/cores/arduino
+from WInterrupts.h
+//      LOW 0
+//      HIGH 1
+#define CHANGE 2
+#define FALLING 3
+#define RISING 4
+
