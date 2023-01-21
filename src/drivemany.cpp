@@ -1,52 +1,58 @@
 // https://wiki.seeedstudio.com/Seeeduino-XIAO-Expansion-Board/
 // needs u8g2, pcf8563 libraries
 // Arduino used https://github.com/Bill2462/PCF8563-Arduino-Library
+// rename to .ino for Arduino IDE
 
-
-//ARDUINO_SEEED_XIAO_M0
-//ARDUINO_XIAO_ESP32C3
-//ARDUINO_RASPBERRY_PI_PICO
-//ARDUINO_SEEED_XIAO_RP2040
+#define LOOP_DELAY 1000   // ms to delay at end of loop
+/** Platform IO # defines:
+    ARDUINO_SEEED_XIAO_M0      default seeed_xiao
+    ARDUINO_XIAO_ESP32C3       default seeed_xiao_esp32c3
+    ARDUINO_RASPBERRY_PI_PICO  default pico build (official pi)
+    ARDUINO_SEEED_XIAO_RP2040  rp2040 earlephilhower tools
+**/
 #include <Arduino.h>
 #include <U8x8lib.h>
 #include <PCF8563.h>
 PCF8563 pcf;
 #include <Wire.h>
+/** Interrupt states:
+    M0, RP2040:
+    // LOW = 0x00 for LOW level
+    // HIGH = 0x01 for HIGH level
+    // CHANGE = 0x02
+    // RISING = 0x04
+    // FALLING = 0x03
+    ESP32C3 interrupt states:
+    // DISABLED = 0x00 (== LOW)
+    // ONLOW = 0x04 for LOW level
+    // ONHIGH = 0x05 for HIGH level
+    // CHANGE = 0x03
+    // RISING = 0x01
+    // FALLING = 0x02
+**/
+
 #define BUTTON_INTERRUPT 1
+#define BUTTON_INTERRUPT_MODE FALLING
+#define BUTTON_PIN A1   // D1 not defined for XIAO_M0
 #if defined(ARDUINO_XIAO_ESP32C3)
-// DISABLED = 0x00 (== LOW)
-// ONLOW = 0x04 for LOW level
-// ONHIGH = 0x05 for HIGH level
-// CHANGE = 0x03
-// RISING = 0x01
-// FALLING = 0x02
-#define BUTTON_INTERRUPT_MODE FALLING
+#define LED_PIN (-1)    // undefined
+#elif defined(ARDUINO_RASPBERRY_PI_PICO)
+#define LED_PIN (17)  //xiao pin
 #else
-// LOW = 0x00 for LOW level
-// HIGH = 0x01 for HIGH level
-// CHANGE = 0x02
-// RISING = 0x04
-// FALLING = 0x03
-#define BUTTON_INTERRUPT_MODE FALLING
-#endif
-// for XIAO SAMD21: button push is low
-#define BUTTON_PIN A1   //D1 didn't work
-// for XIAO SAMD21: low is on
-#if not defined(ARDUINO_XIAO_ESP32C3)
 #define LED_PIN    LED_BUILTIN
 #endif
+
 #define BUZZER_PIN A3   //D3 didn't work
 #define DAC_PIN    A0
-#define DAC_RESOLUTION 10
+#define DAC_RESOLUTION 10  // only SAMD21
 #define ADC_PIN    A2
-#if defined(ARDUINO_SEEED_XIAO_RP2040)
-//U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-// use default I2c
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-#elif defined(ARDUINO_XIAO_ESP32C3)
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
+
+#if defined(ARDUINO_RASPBERRY_PI_PICO)
+// use XIAO pinout
+U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ 7u, /* data=*/ 6u, /* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
 #else
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ PIN_WIRE_SCL, /* data=*/ PIN_WIRE_SDA, /* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
+// use default I2C
+U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
 #endif
 
 int length = 28; // the number of notes
@@ -133,16 +139,17 @@ static void dumpinfo(void) {
   Serial.print("     digitalInterrupt: ");
   Serial.print(digitalPinToInterrupt(BUTTON_PIN));
   Serial.print("  Value=");Serial.println(digitalRead(BUTTON_PIN));
+  Serial.print("FALLING=");Serial.println(FALLING);
+  Serial.print("LED Pin: ");Serial.println(LED_PIN);
+  
 }
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial) ;
+  while (!Serial) ;        // ESP32C3 Serial seems up if powered from USB with no terminal pgm connected
 
 #if not defined(ARDUINO_XIAO_ESP32C3)
   pinMode(LED_PIN, OUTPUT);
-#else
-  Serial.println("XIAO ESP32C3");
 #endif
   
   pinMode(BUTTON_PIN, INPUT_PULLUP);
@@ -242,8 +249,11 @@ void loop() {
     buzzOn = !buzzOn;
   }
 #endif
+#if not defined(ARDUINO_XIAO_ESP32C3)
+  digitalWrite(LED_PIN, digitalRead(BUTTON_PIN));
+#endif
   if (buzzOn) {
     doBuzzer();
   }
-  delay(1000);
+  delay(LOOP_DELAY);
 }
