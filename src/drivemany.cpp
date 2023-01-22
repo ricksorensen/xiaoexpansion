@@ -3,12 +3,13 @@
 // Arduino used https://github.com/Bill2462/PCF8563-Arduino-Library
 // rename to .ino for Arduino IDE
 
-#define LOOP_DELAY 1000   // ms to delay at end of loop
 /** Platform IO # defines:
-    ARDUINO_SEEED_XIAO_M0      default seeed_xiao
-    ARDUINO_XIAO_ESP32C3       default seeed_xiao_esp32c3
-    ARDUINO_RASPBERRY_PI_PICO  default pico build (official pi)
-    ARDUINO_SEEED_XIAO_RP2040  rp2040 earlephilhower tools
+    ARDUINO_SEEED_XIAO_M0              default seeed_xiao
+    ARDUINO_XIAO_ESP32C3               default seeed_xiao_esp32c3
+    ARDUINO_RASPBERRY_PI_PICO          default pico build (official pi)
+    ARDUINO_SEEED_XIAO_RP2040          rp2040 earlephilhower tools
+    ARDUINO_Seeed_XIAO_nRF52840_Sense  arduino IDE, platformio adafruitnrf
+    SEEED_XIAO_NRF52840_SENSE          platformio, mbed nrf
 **/
 #include <Arduino.h>
 #include <U8x8lib.h>
@@ -16,7 +17,7 @@
 PCF8563 pcf;
 #include <Wire.h>
 /** Interrupt states:
-    M0, RP2040:
+    M0, RP2040, NRF52840
     // LOW = 0x00 for LOW level
     // HIGH = 0x01 for HIGH level
     // CHANGE = 0x02
@@ -31,7 +32,8 @@ PCF8563 pcf;
     // FALLING = 0x02
 **/
 
-#define BUTTON_INTERRUPT 1
+#define LOOP_DELAY 1000        // ms to delay at end of loop
+#define BUTTON_INTERRUPT 1     // 0 to use polling, 1 to user interrupts
 #define BUTTON_INTERRUPT_MODE FALLING
 #define BUTTON_PIN A1   // D1 not defined for XIAO_M0
 #if defined(ARDUINO_XIAO_ESP32C3)
