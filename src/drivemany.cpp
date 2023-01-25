@@ -52,6 +52,8 @@ PCF8563 pcf;
 #if defined(ARDUINO_RASPBERRY_PI_PICO)
 // use XIAO pinout
 U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ 7u, /* data=*/ 6u, /* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
+#elif defined(ARDUINO_XIAO_ESP32C3)
+U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
 #else
 // use default I2C
 U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
@@ -127,6 +129,8 @@ static void dumpinfo(void) {
   Serial.println("XIAO_M0");
 #elif defined(ARDUINO_XIAO_ESP32C3)
   Serial.println("XIAO_ESP32C3");
+  Serial.print("   I2C: (SCL,D5)=");Serial.print(SCL);
+  Serial.print(" ");Serial.println(D5);
 #elif defined(ARDUINO_RASPBERRY_PI_PICO)
   Serial.println("PICO");
 #elif defined(ARDUINO_SEEED_XIAO_RP2040)
