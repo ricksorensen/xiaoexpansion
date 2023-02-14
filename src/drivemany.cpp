@@ -45,7 +45,7 @@ PCF8563 pcf;
 #endif
 
 #define BUZZER_PIN A3   //D3 didn't work
-#define DAC_PIN    A0
+#define DAC_PIN    A0   // not on RP2040
 #define DAC_RESOLUTION 10  // only SAMD21
 #define ADC_PIN    A2
 
@@ -53,7 +53,8 @@ PCF8563 pcf;
 // use XIAO pinout
 U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ 7u, /* data=*/ 6u, /* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
 #elif defined(ARDUINO_XIAO_ESP32C3)
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
+//0U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
+U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
 #else
 // use default I2C
 U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
@@ -153,7 +154,8 @@ static void dumpinfo(void) {
 void setup() {
   Serial.begin(115200);
   while (!Serial) ;        // ESP32C3 Serial seems up if powered from USB with no terminal pgm connected
-
+  delay(5000);
+  Serial.println("setup: Starting up");
 #if not defined(ARDUINO_XIAO_ESP32C3)
   pinMode(LED_PIN, OUTPUT);
 #endif
@@ -184,12 +186,12 @@ void setup() {
   pcf.init();//initialize the clock
   Serial.println("pcf.init ... done");
   pcf.stopClock();//stop the clock
-  pcf.setYear(20);//set year
-  pcf.setMonth(10);//set month
-  pcf.setDay(23);//set dat
-  pcf.setHour(17);//set hour
-  pcf.setMinut(33);//set minut
-  pcf.setSecond(0);//set second
+  pcf.setYear(22);//set year
+  pcf.setMonth(2);//set month
+  pcf.setDay(14);//set dat
+  pcf.setHour(10);//set hour
+  pcf.setMinut(11);//set minut, note missing e!
+  pcf.setSecond(12);//set second
   pcf.startClock();//start the clock
   Serial.println("pcf.startClock() ... done");
   Serial.println("Enter integer voltage values");
