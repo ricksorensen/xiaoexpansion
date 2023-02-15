@@ -170,4 +170,26 @@ from WInterrupts.h
 Arduino IDE: rename .cpp to .ino and put in selfnamed directory
     ESP32 Arduino -> XIAO_ESP32C3  [way down at bottom of list]
     Seeed SAMD (M0) -> Seeeduino XIAO
-    Raspberry PI RP2040 Boards (2.7.1) -> Seeed Xiao RP2040 
+    Raspberry PI RP2040 Boards (2.7.1) -> Seeed Xiao RP2040
+
+----------------------
+function:
+   playNote, playTone
+   doBuzzer
+      play tune
+   dumpInfo
+   buttonpush (LED if available echoes button)
+   setup
+      config pins (BUTTON, ADC, BUZZER, LED)
+      set ADC resolution
+      init display
+      init pcf  (2022-02-14 10:11:12)
+   loop
+     # not for RP2040 check serial for new voltage
+     read and display time
+     # not for RP2040 set new voltage DAC
+     read ADC and display value
+     check button - toggle onoff
+     # not ESP32C set LED to buttonpin
+     if onoff- doBuzzer
+     
