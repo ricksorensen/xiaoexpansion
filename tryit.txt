@@ -16,4 +16,24 @@ simple        - uses PCF8563.h  work now Wire.begin()
 2022-12-15
 with 12-bit resolution set
 nrf_adafruit : ADC values not very accurate ... 3900 max 
-nrf_mbed     : ADC values closer,"XIAO_NRF52840_SENSE" 
+nrf_mbed     : ADC values closer,"XIAO_NRF52840_SENSE"
+pico         : song starts playing, no display, interrupt not working?
+PICO
+BUTTON_INTERRUPT = 1   Count=0
+Button Pin: 27     digitalInterrupt: 27  Value=1   A1
+FALLING=3
+LED Pin: 17
+Buzzer Pin: 29                                     A3
+No DAC
+ADC Pin: 28                                        A2
+  Resolution: 12
+u8x8 begin ... done
+pcf.init ... done
+pcf.startClock() ... done
+Enter integer voltage values
+
+BUTTON_INTERRUPT=0: button/song works... still no display
+SWI2C:  no display
+HWI2C(reset,clock,data) instead of (clock,data,reset) no display
+BUTTON_INTERRUPT=1: song always on, no display
+
