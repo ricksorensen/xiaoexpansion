@@ -6,7 +6,7 @@
 /** Platform IO # defines:
     ARDUINO_SEEED_XIAO_M0              default seeed_xiao
     ARDUINO_XIAO_ESP32C3               default seeed_xiao_esp32c3
-    ARDUINO_RASPBERRY_PI_PICO          default pico build (official pi)
+    ARDUINO_RASPBERRY_PI_PICO          default pico build (official pi, mbed)
     ARDUINO_SEEED_XIAO_RP2040          rp2040 earlephilhower tools
     ARDUINO_Seeed_XIAO_nRF52840_Sense  arduino IDE, platformio adafruitnrf
     SEEED_XIAO_NRF52840_SENSE          platformio, mbed nrf
@@ -39,15 +39,24 @@ PCF8563 pcf;
 #if defined(ARDUINO_XIAO_ESP32C3)
 #define LED_PIN (-1)    // undefined
 #elif defined(ARDUINO_RASPBERRY_PI_PICO)
-#define LED_PIN (17)  //xiao pin
+#define LED_PIN (17)  //xiao pin    ... avoid conflict with PICO W 
 #else
 #define LED_PIN    LED_BUILTIN
 #endif
 
-#define BUZZER_PIN A3   //D3 didn't work
-#define DAC_PIN    A0   // not on RP2040
+#define BUZZER_PIN A3   //D3 didn't work for SAMD
+#define DAC_PIN    A0   // only on SAMD
 #define DAC_RESOLUTION 10  // only SAMD21
 #define ADC_PIN    A2
+// default ADC_RESOLUTION=12 for XIAO_M0
+//                        12 for NRF mbed and NRF adafruit core
+//                        12 for rp2040
+//                        12 for ESP32C3 ... not change able
+#if defined(ARDUINO_XIAO_ESP32C3)
+#define MYADCRESOLUTION 12
+#else
+#define MYADCRESOLUTION ADC_RESOLUTION
+#endif
 
 #if defined(ARDUINO_RASPBERRY_PI_PICO)
 // use XIAO pinout
@@ -130,12 +139,14 @@ static void dumpinfo(void) {
   Serial.println("XIAO_M0");
 #elif defined(ARDUINO_XIAO_ESP32C3)
   Serial.println("XIAO_ESP32C3");
-  Serial.print("   I2C: (SCL,D5)=");Serial.print(SCL);
-  Serial.print(" ");Serial.println(D5);
 #elif defined(ARDUINO_RASPBERRY_PI_PICO)
   Serial.println("PICO");
 #elif defined(ARDUINO_SEEED_XIAO_RP2040)
   Serial.println("XIAO_RP2040");
+#elif defined(SEEED_XIAO_NRF52840_SENSE)
+  Serial.println("XIAO_NRF52840_SENSE (mbed)");
+#elif defined(ARDUINO_Seeed_XIAO_nRF52840_Sense)
+  Serial.println("ARDUINO_Seeed_XIAO_nRF52840_Sense adafruit core");
 #else
   Serial.println("Unknown board");
 #endif
@@ -148,7 +159,15 @@ static void dumpinfo(void) {
   Serial.print("  Value=");Serial.println(digitalRead(BUTTON_PIN));
   Serial.print("FALLING=");Serial.println(FALLING);
   Serial.print("LED Pin: ");Serial.println(LED_PIN);
-  
+  Serial.print("Buzzer Pin: ");Serial.println(BUZZER_PIN);
+#if defined (ARDUINO_SEEED_XIAO_M0)
+  Serial.print("DAC Pin: ");Serial.print(DAC_PIN);
+  Serial.print("  Resolution: ");Serial.println(DAC_RESOLUTION);
+#else
+  Serial.println("No DAC");
+#endif
+  Serial.print("ADC Pin: ");Serial.println(ADC_PIN);
+  Serial.print("  Resolution: ");Serial.println(MYADCRESOLUTION);
 }
 
 void setup() {
@@ -175,8 +194,8 @@ void setup() {
 #endif
 #endif
 #if not defined(ARDUINO_XIAO_ESP32C3)
-  analogReadResolution(ADC_RESOLUTION);   // should be 12
-#if not defined(ARDUINO_SEEED_XIAO_RP2040)
+  analogReadResolution(MYADCRESOLUTION);   // should be 12
+#if defined(ARDUINO_SEEED_XIAO_M0)
   analogWriteResolution(DAC_RESOLUTION);  // should be 10
 #endif
 #endif
@@ -236,10 +255,10 @@ void loop() {
   if (newVoltage >= 0) {
     u8x8.setCursor(0,3);
     u8x8.clearLine(3);
-#if not defined(ARDUINO_SEEED_XIAO_RP2040)
+#if defined(ARDUINO_SEEED_XIAO_M0)
     analogWrite(DAC_PIN, newVoltage);
 #else
-    Serial.println("No DAC on RP2040");
+    Serial.println("No DAC on this chip");
 #endif
     u8x8.print("vDAC: ");u8x8.print(newVoltage);
   }
