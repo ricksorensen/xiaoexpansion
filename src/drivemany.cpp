@@ -11,11 +11,17 @@
     ARDUINO_Seeed_XIAO_nRF52840_Sense  arduino IDE, platformio adafruitnrf
     SEEED_XIAO_NRF52840_SENSE          platformio, mbed nrf
 **/
+#if !defined(SAMD_REG_DUMP)
+#define SAMD_REG_DUMP 0
+#endif
 #include <Arduino.h>
 #include <U8x8lib.h>
 #include <PCF8563.h>
 PCF8563 pcf;
 #include <Wire.h>
+#if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
+#include <checkregs.h>
+#endif
 /** Interrupt states:
     M0, RP2040, NRF52840
     // LOW = 0x00 for LOW level
@@ -35,7 +41,7 @@ PCF8563 pcf;
 #define LOOP_DELAY 1000        // ms to delay at end of loop
 #define BUTTON_INTERRUPT 1     // 0 to use polling, 1 to user interrupts
 #define BUTTON_INTERRUPT_MODE FALLING
-#define BUTTON_PIN A1   // D1 not defined for XIAO_M0
+#define BUTTON_PIN A1  // D1 not defined for XIAO_M0
 #if defined(ARDUINO_XIAO_ESP32C3)
 #define LED_PIN (-1)    // undefined
 #elif defined(ARDUINO_RASPBERRY_PI_PICO)
@@ -175,6 +181,13 @@ void setup() {
   while (!Serial) ;        // ESP32C3 Serial seems up if powered from USB with no terminal pgm connected
   delay(5000);
   Serial.println("setup: Starting up");
+#if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
+  portstat();
+  for (int i=0;i<12;i++) {
+    portregs(i);
+  }
+  dacstate();
+#endif  
 #if not defined(ARDUINO_XIAO_ESP32C3)
   pinMode(LED_PIN, OUTPUT);
 #endif
@@ -213,6 +226,13 @@ void setup() {
   pcf.setSecond(12);//set second
   pcf.startClock();//start the clock
   Serial.println("pcf.startClock() ... done");
+#if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
+  portstat();
+  for (int i=0;i<12;i++) {
+    portregs(i);
+  }
+  dacstate();
+#endif  
   Serial.println("Enter integer voltage values");
 }
  
@@ -230,6 +250,10 @@ void loop() {
     Serial.print("New Voltage:");
     Serial.println(newVoltage);
     dumpinfo();
+#if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
+    dacstate();
+#endif  
+    
   }
   Time nowTime = pcf.getTime();//get current time
   u8x8.setFont(u8x8_font_chroma48medium8_r);   // choose a suitable font
