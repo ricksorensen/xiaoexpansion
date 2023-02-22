@@ -15,6 +15,7 @@
 #define SAMD_REG_DUMP 0
 #endif
 #include <Arduino.h>
+#include "playsong.h"
 #include <U8x8lib.h>
 #include <PCF8563.h>
 PCF8563 pcf;
@@ -75,53 +76,8 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs wi
 U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
 #endif
 
-int length = 28; // the number of notes
-char notes[] = "GGAGcB GGAGdc GGxecBA yyecdc";
-int beats[] = { 2, 2, 8, 8, 8, 16, 1, 2, 2, 8, 8, 8, 16, 1, 2, 2, 8, 8, 8, 8, 16, 1, 2, 2, 8, 8, 8, 16 };
-int tempo = 150;
-void playTone(int tone, int duration) {
-  for (long i = 0; i < duration * 1000L; i += tone * 2) {
-    digitalWrite(BUZZER_PIN, HIGH);
-    delayMicroseconds(tone);
-    digitalWrite(BUZZER_PIN, LOW);
-    delayMicroseconds(tone);
-  }
-}
- 
-void playNote(char note, int duration) {
-  char names[] = {'C', 'D', 'E', 'F', 'G', 'A', 'B',
-                  'c', 'd', 'e', 'f', 'g', 'a', 'b',
-                  'x', 'y'
-  };
-  int tones[] = { 1915, 1700, 1519, 1432, 1275, 1136, 1014,
-                  956,  834,  765,  593,  468,  346,  224,
-                  655 , 715
-  };
-  int SPEE = 5;
- 
-  // play the tone corresponding to the note name
- 
-  for (int i = 0; i < 16; i++) {
-    if (names[i] == note) {
-      int newduration = duration / SPEE;
-      playTone(tones[i], newduration);
-    }
-  }
-}
 
 static bool buzzOn = false;
-void doBuzzer(void) {
-  for (int i = 0; i < length; i++) {
-    if (notes[i] == ' ') {
-      delay(beats[i] * tempo); // rest
-    } else {
-      playNote(notes[i], beats[i] * tempo);
-    }
-    // pause between notes
-    delay(tempo);
-  }
-}
-
 static volatile unsigned long buttonCt=0;
 
 #if BUTTON_INTERRUPT
@@ -304,7 +260,7 @@ void loop() {
   digitalWrite(LED_PIN, digitalRead(BUTTON_PIN));
 #endif
   if (buzzOn) {
-    doBuzzer();
+    doBuzzer(BUZZER_PIN);
   }
   delay(LOOP_DELAY);
 }
