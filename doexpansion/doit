@@ -1,0 +1,8 @@
+pio run -t cleanall
+pio run -e seeed_xiao &>build.seeed_xiao
+pio run -e pico &>build.pico
+pio run -e seeed_xiao_esp32c3 &>build.esp32
+pio run -e pico_future &>build.pifuture
+pio run -e sense_future &>build.nrffuture
+pio run -e sense_future_adafruit &>build.nrfadafuture
+
