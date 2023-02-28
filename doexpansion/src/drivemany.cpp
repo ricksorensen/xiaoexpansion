@@ -45,7 +45,7 @@ PCF8563 pcf;
 #define BUTTON_PIN A1  // D1 not defined for XIAO_M0
 #if defined(ARDUINO_XIAO_ESP32C3)
 #define LED_PIN (-1)    // undefined
-#elif defined(ARDUINO_RASPBERRY_PI_PICO)
+#elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
 #define LED_PIN (17)  //xiao pin    ... avoid conflict with PICO W 
 #else
 #define LED_PIN    LED_BUILTIN
@@ -65,7 +65,7 @@ PCF8563 pcf;
 #define MYADCRESOLUTION ADC_RESOLUTION
 #endif
 
-#if defined(ARDUINO_RASPBERRY_PI_PICO)
+#if defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
 // use XIAO pinout
 U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ 7u, /* data=*/ 6u, /* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
 #elif defined(ARDUINO_XIAO_ESP32C3)
@@ -147,7 +147,11 @@ void setup() {
 #if not defined(ARDUINO_XIAO_ESP32C3)
   pinMode(LED_PIN, OUTPUT);
 #endif
-  
+#if defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
+  pinMode(25, OUTPUT);digitalWrite(25, 1);  // turn off all
+  pinMode(16, OUTPUT);digitalWrite(16, 1);
+  digitalWrite(LED_PIN, 1);
+#endif
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(ADC_PIN, INPUT);  // do not set mode of DAC output  
   pinMode(BUZZER_PIN, OUTPUT);
