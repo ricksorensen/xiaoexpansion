@@ -18,4 +18,6 @@ lib_deps =
         olikraus/U8g2
         https://github.com/Bill2462/PCF8563-Arduino-Library
 ```
-the micropython external modules used are `ssd1306` from `micropython-lib`, `pcf8563` from `https://github.com/sshahryiar/Raspberry-Pi-PICO---RP2040/blob/main/DVK511%20-%20PCF8563%20RTCC/PCF8563.py`
+the micropython external modules used are
+- `ssd1306` from `micropython-lib`
+- `pcf8563` from `https://github.com/sshahryiar/Raspberry-Pi-PICO---RP2040/blob/main/DVK511%20-%20PCF8563%20RTCC/PCF8563.py` renamed as `pcfsimp.py`
