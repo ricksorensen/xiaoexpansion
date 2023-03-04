@@ -4,8 +4,10 @@ Basic usage:
 Known `platformio` build environments (see `platformio.ini` for details):
 - `seeed_xiao` for the Seeed XIAO SAMD21
 - `pico` for the Raspberry Pi PICO (notionally the Seeed SAMD XIAO RP2040) with mbed, standard arduino tools
+needs significant adaptation for XIAO RP2040 to get I2 working
 - `seeed_xiao_esp32c3` for the Seeed XIAO ESP32C3
 - `pico_future` for the Seeed XIAO RP2040 using the `earlephilhower` toolset
+preferred option for XIAO 2040
 - `sense_future` for the Seeed XIAO NRF52840 Sense- with mbed
 - `sense_future_adafruit` for the Seeed XIAO NRF52840 Sense, bare metal
 
