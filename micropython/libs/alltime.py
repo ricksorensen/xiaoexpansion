@@ -20,11 +20,22 @@ class AllTime:
         self.gpsUart = gpsUart
         self.pcf = pcf
         self.rtc = rtc
+        self.t0 = self.setTimers(waittime=20)
 
-        self.t0 = self.getGPSTime(waittime=20)
-        if self.t0:
-            setPCF(self.pcf, self.t0)
-            setRTC(self.rtc, self.t0)
+    def setTimers(self, waittime=8):
+        gt = self.getGPSTime(waittime=waittime)
+        if gt:
+            setPCF(self.pcf, gt)
+        else:
+            pt = self.pcf.get()
+            if pt[6] > 20 and pt[6] < 30:
+                gt = [pt[6] + 2000, pt[5], pt[4], pt[0], pt[1], pt[2]]
+            else:
+                gt = [2023, 2, 28, 12, 13, 14]
+                setPCF(self.pcf, gt)
+                gt[3] = gt[3] + 1  # bump an hour
+        setRTC(self.rtc, gt)
+        return gt
 
     def getGPSTime(self, waittime=8):
         timeout = time.time() + waittime
