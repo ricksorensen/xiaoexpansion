@@ -65,9 +65,12 @@ PCF8563 pcf;
 #define MYADCRESOLUTION ADC_RESOLUTION
 #endif
 
-#if defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
+#if defined(ARDUINO_RASPBERRY_PI_PICO) 
 // use XIAO pinout
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ 7u, /* data=*/ 6u, /* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
+//U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/*clock=*/7u, /* data=*/ 6u, /* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
+U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
+#elif defined(ARDUINO_SEEED_XIAO_RP2040)
+U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
 #elif defined(ARDUINO_XIAO_ESP32C3)
 //0U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
 U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
@@ -173,19 +176,21 @@ void setup() {
 #endif
 #endif
   u8x8.begin();
-  Serial.println("u8x8 begin ... done");
   u8x8.setFlipMode(1);
   pcf.init();//initialize the clock
   Serial.println("pcf.init ... done");
-  pcf.stopClock();//stop the clock
-  pcf.setYear(22);//set year
-  pcf.setMonth(2);//set month
-  pcf.setDay(14);//set dat
-  pcf.setHour(10);//set hour
-  pcf.setMinut(11);//set minut, note missing e!
-  pcf.setSecond(12);//set second
+  Time pcfTime = pcf.getTime();//get current time
+  if (pcfTime.year < 2005) {
+    pcf.stopClock();//stop the clock
+    pcf.setYear(22);//set year
+    pcf.setMonth(2);//set month
+    pcf.setDay(14);//set dat
+    pcf.setHour(10);//set hour
+    pcf.setMinut(11);//set minut, note missing e!
+    pcf.setSecond(12);//set second
+  }
   pcf.startClock();//start the clock
-  Serial.println("pcf.startClock() ... done");
+
 #if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
   portstat();
   for (int i=0;i<12;i++) {
