@@ -9,7 +9,7 @@ import ssd1306
 import pcfsimp
 import alltime
 
-import xiaosamd as mcu
+import xiaoesp32c3 as mcu
 
 # print(mcu.i2c)
 # print(mcu.i2c.scan())
@@ -27,6 +27,8 @@ timedata = alltime.AllTime(mcu.uart, pcf, rtc)
 button = machine.Pin(mcu.BUTTON_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
 signalBuzz = machine.Pin(mcu.SIGNAL_BUZZOFF, machine.Pin.IN, machine.Pin.PULL_UP)
 
+led = None
+if mcu.LED_PIN is not None:
 led = machine.Pin(mcu.LED_PIN, machine.Pin.OUT)
 led.high()  # start off
 
@@ -78,6 +80,7 @@ while True:
             if mcu.dac is not None:
                 mcu.dac.write(newvoltage)
         print("newV: " + vline)
+    if led is not None:
     led.value(button.value())
     # RTC: datetime
     #   year, month, date, dow (0 is monday?), hour, minute, second, microsec
