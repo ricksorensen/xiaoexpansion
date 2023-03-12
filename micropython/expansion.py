@@ -8,8 +8,20 @@ import buzzrainbow as buzztune
 import ssd1306
 import pcfsimp
 import alltime
+import sys
 
-import xiaoesp32c3 as mcu
+pf = sys.platform
+if pf == "samd":
+    import xiaosamd as mcu
+elif pf == "rp2":
+    import xiaorp2 as mcu
+elif pf == "esp32":
+    import xiaoesp32 as mcu
+elif pf == "nrf52":
+    import xiaonrf as mcu
+else:
+    print(" Unknown MCU")
+del sys
 
 # print(mcu.i2c)
 # print(mcu.i2c.scan())
