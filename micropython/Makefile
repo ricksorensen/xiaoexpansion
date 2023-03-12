@@ -24,7 +24,7 @@ MYLIBS = buzzrainbow.mpy  pcfsimp.mpy alltime.mpy
 SYSLIBS = ssd1306    # assumed installed on mcu - either frozen or as lib
 
 
-RUN = expansion.py 
+RUN = expansion.mpy  # help out SAMD21 
 
 %.mpy: libs/%.py
 	mpy-cross -o $@ $<
@@ -33,7 +33,7 @@ RUN = expansion.py
 	mpy-cross -o $@ $<
 
 # uses mpremote cp, which will overwrite files if they exist on mcu
-upload: $(MAIN) $(MYLIBS) $(MCULIB)
+upload: $(MAIN) $(MYLIBS) $(MCULIB) $(RUN)
 ifeq "$(MP_SSD1306)" "0"
 	echo "Run mip install of ssd1306"
 	mpremote $(MP_PORT) mip --target lib install ssd1306
