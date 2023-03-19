@@ -11,12 +11,19 @@ import alltime
 import sys
 
 pf = sys.platform
+rtc = None
 if pf == "samd":
     import xiaosamd as mcu
+
+    rtc = machine.RTC()
 elif pf == "rp2":
     import xiaorp2 as mcu
+
+    rtc = machine.RTC()
 elif pf == "esp32":
     import xiaoesp32 as mcu
+
+    rtc = machine.RTC()
 elif pf == "nrf52":
     import xiaonrf as mcu
 else:
@@ -32,8 +39,10 @@ gc.collect()
 display = ssd1306.SSD1306_I2C(128, 64, mcu.i2c, addr=60)
 pcf = pcfsimp.PCF8563(mcu.i2c)
 print("pcf: ", pcf.get())
-rtc = machine.RTC()
-print("rtc: ", rtc.datetime())
+if rtc is not None:
+    print("rtc: ", rtc.datetime())
+else:
+    print("RTC not available")
 
 timedata = alltime.AllTime(mcu.uart, pcf, rtc)
 button = machine.Pin(mcu.BUTTON_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
@@ -41,8 +50,8 @@ signalBuzz = machine.Pin(mcu.SIGNAL_BUZZOFF, machine.Pin.IN, machine.Pin.PULL_UP
 
 led = None
 if mcu.LED_PIN is not None:
-led = machine.Pin(mcu.LED_PIN, machine.Pin.OUT)
-led.high()  # start off
+    led = machine.Pin(mcu.LED_PIN, machine.Pin.OUT)
+    led.high()  # start off
 
 buzzer = machine.Pin(mcu.BUZZER_PIN, machine.Pin.OUT)
 buttonPush = False
@@ -82,54 +91,68 @@ qin = querystdin.StdinQuery()
 adc = machine.ADC(machine.Pin(mcu.ADC_PIN))
 newvoltage = None
 print("Starting")
-while True:
-    gc.collect()
-    if (cin := qin.kbin()) is not None:
-        vline = qin.kbLine(cin)
-        vin = getVoltage(vline, 1023)
-        if vin is not None:
-            newvoltage = vin
-            if mcu.dac is not None:
-                mcu.dac.write(newvoltage)
-        print("newV: " + vline)
-    if led is not None:
-    led.value(button.value())
-    # RTC: datetime
-    #   year, month, date, dow (0 is monday?), hour, minute, second, microsec
-    # PFC8563...
-    #   hour, minute, second, dow (0 is sunday), date, month, year (add 2000)
-    pcf_time = pcf.get()
-    rtc_time = rtc.datetime()
-    display.fill(0)
-    display.text(
-        "pDate {:04d}-{:02d}-{:02d}".format(
-            pcf_time[6] + 2000, pcf_time[5], pcf_time[4]
-        ),
-        0,
-        0,
-    )
-    display.text(
-        "rDate {:04d}-{:02d}-{:02d}".format(rtc_time[0], rtc_time[1], rtc_time[2]),
-        0,
-        10,
-    )
-    display.text(
-        "pTime {:02d}-{:02d}-{:02d}".format(pcf_time[0], pcf_time[1], pcf_time[2]),
-        0,
-        20,
-    )
-    display.text(
-        "rTime {:02d}-{:02d}-{:02d}".format(rtc_time[4], rtc_time[5], rtc_time[6]),
-        0,
-        30,
-    )
-    if newvoltage is not None:
-        display.text("vDAC: {:04d}".format(newvoltage), 0, 40)
-    display.text("vADC: {:04d}".format(adc.read_u16()), 0, 50)
-    display.show()
-    if buttonPush:
-        print("Button Pushed")
-        buttonPush = False
-        if signalBuzz.value() == 0:
-            dobuzzer(buzzer)
-    time.sleep(1)
+keepgoing = True
+try:
+    while keepgoing:
+        gc.collect()
+        if (cin := qin.kbin()) is not None:
+            vline = qin.kbLine(cin)
+            vin = getVoltage(vline, 1023)
+            if vin is not None:
+                newvoltage = vin
+                if mcu.dac is not None:
+                    mcu.dac.write(newvoltage)
+            print("newV: " + vline)
+        if led is not None:
+            led.value(button.value())
+        # RTC: datetime
+        #   year, month, date, dow (0 is monday?), hour, minute, second, microsec
+        # PFC8563...
+        #   hour, minute, second, dow (0 is sunday), date, month, year (add 2000)
+        pcf_time = pcf.get()
+        display.fill(0)
+        display.text(
+            "pDate {:04d}-{:02d}-{:02d}".format(
+                pcf_time[6] + 2000, pcf_time[5], pcf_time[4]
+            ),
+            0,
+            0,
+        )
+        display.text(
+            "pTime {:02d}-{:02d}-{:02d}".format(pcf_time[0], pcf_time[1], pcf_time[2]),
+            0,
+            10,
+        )
+        if rtc is not None:
+            rtc_time = rtc.datetime()
+            display.text(
+                "rDate {:04d}-{:02d}-{:02d}".format(
+                    rtc_time[0], rtc_time[1], rtc_time[2]
+                ),
+                0,
+                20,
+            )
+            display.text(
+                "rTime {:02d}-{:02d}-{:02d}".format(
+                    rtc_time[4], rtc_time[5], rtc_time[6]
+                ),
+                0,
+                30,
+            )
+        else:
+            display.text("RTC not available", 0, 25)
+
+        if newvoltage is not None:
+            display.text("vDAC: {:04d}".format(newvoltage), 0, 40)
+        display.text("vADC: {:04d}".format(adc.read_u16()), 0, 50)
+        display.show()
+        if buttonPush:
+            print("Button Pushed")
+            buttonPush = False
+            if signalBuzz.value() == 0:
+                dobuzzer(buzzer)
+        time.sleep(1)
+except KeyboardInterrupt:
+    keepgoing = False
+
+print("All Done")
