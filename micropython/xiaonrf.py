@@ -19,11 +19,13 @@ i2c = machine.I2C(0, scl=machine.Pin("P5"), sda=machine.Pin("P4"))
 #
 # 20230310: nrf uart does not have any() ??? See RHH
 #  TX = P1.11, RX=P1.12
-# uart = machine.UART(
-#    0,
-#    baudrate=9600,
-# )
-uart = None
+# set tx high to prevent float
+machine.Pin("P43", machine.Pin.OUT).high()
+uart = machine.UART(
+    0,
+    baudrate=9600,
+)
+# uart = None
 
 dac = None
 
