@@ -10,9 +10,19 @@ def setPCF(pcf, gpstime):
 # samd takes 7 - tuple
 # rp2  takes 8 - tuple
 def setRTC(rtc, gpstime):
-    rtc.datetime(
-        (gpstime[0], gpstime[1], gpstime[2], 0, gpstime[3], gpstime[4], gpstime[5], 0)
-    )
+    if rtc is not None:
+        rtc.datetime(
+            (
+                gpstime[0],
+                gpstime[1],
+                gpstime[2],
+                0,
+                gpstime[3],
+                gpstime[4],
+                gpstime[5],
+                0,
+            )
+        )
 
 
 class AllTime:
@@ -34,7 +44,8 @@ class AllTime:
                 gt = [2023, 2, 28, 12, 13, 14]
                 setPCF(self.pcf, gt)
                 gt[3] = gt[3] + 1  # bump an hour
-        setRTC(self.rtc, gt)
+        if self.rtc is not None:
+            setRTC(self.rtc, gt)
         return gt
 
     def getGPSTime(self, waittime=8):
