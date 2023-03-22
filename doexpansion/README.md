@@ -14,6 +14,7 @@ preferred option for XIAO 2040
 Plus some others for the curious.
 
 Implementation notes:
+
 1. Buzzer is driven in source code directly ... simple blocking PWM signal generation.
 2. Code is branched based on defines passed to the compiler based on selected environment:
    * ARDUINO_SEEED_XIAO_M0              default seeed_xiao
@@ -23,4 +24,10 @@ Implementation notes:
    * ARDUINO_Seeed_XIAO_nRF52840_Sense  arduino IDE, platformio adafruitnrf
    * SEEED_XIAO_NRF52840_SENSE          platformio, mbed nrf
 3. Since currently (20230228) GPS/Network time is not being used, the PCF8563 time is arbitrarily set. 
+4. Arduino libraries used are
 
+```
+lib_deps =
+        olikraus/U8g2
+        https://github.com/Bill2462/PCF8563-Arduino-Library
+```
