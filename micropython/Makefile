@@ -20,7 +20,14 @@ $(info  "MCU import: $(MCULIB)")
 
 MAIN = boot.py querystdin.mpy
 
-MYLIBS = buzzrainbow.mpy  pcfsimp.mpy alltime.mpy
+MYLIBS = buzzrainbow.mpy  pcfsimp.mpy
+ALLTIME = alltime.mpy
+ALLTIME_NRF = alltime_nrf.mpy
+ifeq "$(MP_MCU)" "nrf"
+	MYLIBS += $(ALLTIME_NRF)
+else
+	MYLIBS += $(ALLTIME)
+endif
 SYSLIBS = ssd1306    # assumed installed on mcu - either frozen or as lib
 
 
