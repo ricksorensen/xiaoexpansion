@@ -7,27 +7,30 @@ import gc
 import buzzrainbow as buzztune
 import ssd1306
 import pcfsimp
-import alltime
 import sys
 
 pf = sys.platform
 rtc = None
-if pf == "samd":
-    import xiaosamd as mcu
-
-    rtc = machine.RTC()
-elif pf == "rp2":
-    import xiaorp2 as mcu
-
-    rtc = machine.RTC()
-elif pf == "esp32":
-    import xiaoesp32 as mcu
-
-    rtc = machine.RTC()
-elif pf == "nrf52":
+if pf == "nrf52":
+    import alltime_nrf as alltime
     import xiaonrf as mcu
 else:
-    print(" Unknown MCU")
+    import alltime
+
+    if pf == "samd":
+        import xiaosamd as mcu
+
+        rtc = machine.RTC()
+    elif pf == "rp2":
+        import xiaorp2 as mcu
+
+        rtc = machine.RTC()
+    elif pf == "esp32":
+        import xiaoesp32 as mcu
+
+        rtc = machine.RTC()
+    else:
+        print(" Unknown MCU")
 del sys
 
 # print(mcu.i2c)
