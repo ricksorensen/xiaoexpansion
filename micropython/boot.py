@@ -1,6 +1,6 @@
 import sys
 
-if "/lib" not in sys.path:
-    sys.path.append("/lib")
+if "lib" not in sys.path:
+    sys.path.append("lib")
 
 del sys
