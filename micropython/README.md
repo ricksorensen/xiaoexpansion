@@ -24,7 +24,7 @@ Modules used:
 
 Micropython implementation notes
 
-Released version 1.19.1
+Released version 1.19.1 1.20.0
 
 xiao samd21:
 
