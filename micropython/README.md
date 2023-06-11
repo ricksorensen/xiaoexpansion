@@ -17,6 +17,7 @@ Modules used:
 - implementation
    + `expansion.py`     main program
    + `buzzrainbow.py`   play a song on buzzer
+   + `birthday.py`      happy birthday song  
    + `querystdtin.py`   Query REPL for incoming data
    + `alltime.py`       get time from GPS (if avail) or PCF ( if set) and configure RTC
    + `xiaozzzz.py`      particulars for each XIAO version
