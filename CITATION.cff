@@ -1,0 +1,21 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Seeed XIAO Expansion Board Examples
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Eric
+    family-names: Sorensen
+    email: rick.sorensen@gmail.com
+repository-code: 'https://github.com/ricksorensen/xiaoexpansion'
+url: 'https://github.com/ricksorensen/xiaoexpansion'
+abstract: >-
+  Seeed XIAO expansion board peripheral usage examples. 
+  Sample code exists for various XIAO form factor boards:
+  SAMD21, nRF52840, ESP32C and RP2040.  There are examples
+  for both C++/Arduino using PlatformIO and micropython
+license: MIT
