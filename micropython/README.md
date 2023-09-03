@@ -24,15 +24,16 @@ Modules used:
 
 Micropython implementation notes
 
-Released version 1.19.1 1.20.0
+Released version 1.19.1 1.20.0 1.21.0 (early)
 
 xiao samd21:
 
 * The samd21 is limited in both RAM and Flash space.  The default Flash filesystem for micrpython 1.19.1 is 64K, leaving 256-64-8 = 184K for the firmware.
    * As the most resource limited MCU in this exercise it drove many of the implementation decisions.  The limited RAM means that garbage collection should be called occasionally to have enough RAM for the display buffer.
-   * The SSD1306 driver is derived from `framebuf`, which is not part of the 1.19.1 release.  Including this in the default SEEED_XIAO (or in development branch SEED_XIAO_SAMD21) caused the firmware to exceed the 184K size.  To add this in  I created a linker file to reduce the file system to 48K.  This also a allowed me to add `select` (compiled in) and 'ssd1306' (frozen) modules to the firmware.
+   * The SSD1306 driver is derived from `framebuf`, which is not part of the 1.19.1 release.  Including this in the default SEEED_XIAO (or in development branch SEED_XIAO_SAMD21) caused the firmware to exceed the 184K size.  To add this in  I created a linker file with larger firmware space which reduces the file system to 48K.  This then allowed me to add `select` (compiled in) and `ssd1306` (frozen) modules to the firmware.
 
 xiao RP2040, esp32c3:
 
 These can use stock micropython 1.19.1 build with `framebuf` and `select` compiled in.
 
+xiao NRF52840 is a new build, still working out kinks.
