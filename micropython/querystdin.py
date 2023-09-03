@@ -2,7 +2,7 @@ import sys
 
 _use_stdin_query = False
 try:
-    import uselect
+    import select
 
     _use_stdin_query = True
 except ImportError:
@@ -25,8 +25,8 @@ class StdinQuery:
             useSelect = _use_stdin_query
         if useSelect:
             # print("Select Available")
-            self._kpoll = uselect.poll()
-            self._kpoll.register(sys.stdin, uselect.POLLIN)
+            self._kpoll = select.poll()
+            self._kpoll.register(sys.stdin, select.POLLIN)
 
     def kbin(self):
         rv = None
