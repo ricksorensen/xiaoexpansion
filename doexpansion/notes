@@ -193,3 +193,10 @@ function:
      # not ESP32C set LED to buttonpin
      if onoff- doBuzzer
      
+
+-------------------------------------------
+20230430
+nrf52 - sense_future - works .... type in ddd\r  shows ddd
+      - sense_future_adafruit ... type in ddd\r  shows ddd
+            6.2 ... hex file (my update)
+	    
