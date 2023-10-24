@@ -175,8 +175,14 @@ void setup() {
   analogWriteResolution(DAC_RESOLUTION);  // should be 10
 #endif
 #endif
+  uint32_t defclk = u8x8.getBusClock();
+  // for SEEED XIAO SAMD2, default is 400000
+  // u8x8.setBusClock(100000);
   u8x8.begin();
   u8x8.setFlipMode(1);
+  Serial.print("u8x8 bus clock.  Default: ");Serial.print(defclk);
+  defclk = u8x8.getBusClock();
+  Serial.print("    Updated: ");Serial.println(defclk);
   pcf.init();//initialize the clock
   Serial.println("pcf.init ... done");
   Time pcfTime = pcf.getTime();//get current time
@@ -190,7 +196,7 @@ void setup() {
     pcf.setSecond(12);//set second
   }
   pcf.startClock();//start the clock
-
+  Serial.println("pcf.startClock() ... done");
 #if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
   portstat();
   for (int i=0;i<12;i++) {
