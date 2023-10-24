@@ -8,13 +8,16 @@ The micropython code is a work in progress - tested with custom SAMD21 micropyth
 
 Devices onboard the expansion board are:
 
-- PCF8563  RTC using I2C
+- PCF8563 real time clock using I2C
 - SSD1306 OLED 128x64 using I2C
 - Piezo Buzzer
 - Push button
 
 Every mcu has Serial IO and ADC capabilities, but only the SAMD21 has a DAC. 
 
-The micropython implementation will try to use the Serial IO to read a GPS module if present. Both implementation will exercise the PCF8563, OLED, BUZZER, and push button.  ADC is used to read <3.3V on pin1/A0.  REPL input can be used to provide a value which will be sent to the DAC if present.
+The micropython implementation will try to use the Serial IO to read a GPS module if present. Both implementation will exercise the PCF8563, OLED, BUZZER, and push button.  ADC is used to read <3.3V on pin3/A2 REPL input can be used to provide a value which will be sent to the DAC if present.
 
+the micropython external modules used are
 
+- `ssd1306` from `micropython-lib`
+- `pcf8563` from `https://github.com/sshahryiar/Raspberry-Pi-PICO---RP2040/blob/main/DVK511%20-%20PCF8563%20RTCC/PCF8563.py` renamed as `pcfsimp.py`
