@@ -34,3 +34,14 @@ dac = machine.DAC(0)
 
 def buzzpwm(pin):
     return machine.PWM(pin, freq=440, duty_u16=0)
+
+
+# SAMD ADC has several options for vref
+# vref = 2 uses VDD/2 for reference.  Can use gain=DIV2 divide input and give
+#          65536 = VDD
+adc = machine.ADC(machine.Pin(ADC_PIN), vref=2, attenu=True)  # RJS mod adds attenu
+
+# vref = 3 uses external AREF PA03.  Must remember to set PA03 as output and
+#          write value(1)
+# machine.Pin("PA03", machine.Pin.OUT, value=1)  # set reference output high
+# adc = machine.ADC(machine.Pin(ADC_PIN), vref=3)  #
