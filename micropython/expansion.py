@@ -9,6 +9,7 @@ import ssd1306
 import pcfsimp
 import sys
 
+adc = None
 pf = sys.platform
 rtc = None
 if pf == "nrf52":
@@ -21,6 +22,7 @@ else:
         import xiaosamd as mcu
 
         rtc = machine.RTC()
+        adc = mcu.adc
     elif pf == "rp2":
         import xiaorp2 as mcu
 
@@ -90,14 +92,15 @@ def getVoltage(strin, maxv):
 button.irq(button_int, trigger=machine.Pin.IRQ_FALLING)
 
 qin = querystdin.StdinQuery()
-
-adc = machine.ADC(machine.Pin(mcu.ADC_PIN))
+if adc is None:
+    adc = machine.ADC(machine.Pin(mcu.ADC_PIN))
 newvoltage = None
 print("Starting")
 keepgoing = True
 try:
     while keepgoing:
         gc.collect()
+        gc.mem_free()
         if (cin := qin.kbin()) is not None:
             vline = qin.kbLine(cin)
             vin = getVoltage(vline, 1023)
