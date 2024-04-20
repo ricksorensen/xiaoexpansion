@@ -45,11 +45,11 @@ ifeq "$(MP_SSD1306)" "0"
 	echo "Run mip install of ssd1306"
 	mpremote $(MP_PORT) mip --target lib install ssd1306
 endif
-	mpremote $(MP_PORT) cp $(MAIN) :/
+	mpremote $(MP_PORT) cp $(MAIN) :
 	# assumes existence of :/lib/ on mcu
-	mpremote $(MP_PORT) cp $(MYLIBS) :/lib/
-	mpremote $(MP_PORT) cp $(MCULIB) :/
-	mpremote $(MP_PORT) cp $(RUN) :/
+	mpremote $(MP_PORT) cp $(MYLIBS) :lib/
+	mpremote $(MP_PORT) cp $(MCULIB) :
+	mpremote $(MP_PORT) cp $(RUN) :
 
 syslib:
 	mpremote mip install $(SYSLIBS)
