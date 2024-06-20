@@ -200,3 +200,11 @@ nrf52 - sense_future - works .... type in ddd\r  shows ddd
       - sense_future_adafruit ... type in ddd\r  shows ddd
             6.2 ... hex file (my update)
 	    
+--------------------------------------------
+20240620
+boards work, lots of fiddling to install
+had to manually copy pico.uf2 file instead of upload after build
+esp32c3 had be put into load mode with boot res resreleas bootrelease
+no gps updates
+date on rtc was 2022 1010 (or likethat)
+
