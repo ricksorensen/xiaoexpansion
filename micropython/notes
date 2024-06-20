@@ -1,0 +1,37 @@
+samd21:  firmware includes ssd1306 ... 1.20
+rp2040:  firmware includes ssd1306 ... 1.20
+nrf:     firmware includes ssd1306 ... 1.20
+esp32:   firmware includes ssd1306 ... 1.20
+
+
+---------------------------------------------
+20240220
+
+rp2
+{'ver': 'v1.24.0-preview', 'version': '1.24.0-preview', 'port': 'rp2', 'mpy': 'v6.3', 'build': '', 'cpu': 'RP2040', 'family': 'micropython', 'board': 'XIAO RP2040 Local with RP2040', 'arch': 'armv6m'}
+platform:        rp2
+  version:         3.4.0; MicroPython 3c8089d1b on 2024-06-06
+  implementation:  (name='micropython', version=(1, 24, 0, 'preview'), _machine='XIAO RP2040 Local with RP2040', _mpy=4870)
+
+samd21
+{'ver': 'v1.24.0-preview', 'version': '1.24.0-preview', 'port': 'samd', 'mpy': 'v6.3', 'build': '', 'cpu': 'SAMD21G18A', 'family': 'micropython', 'board': 'Seeed Xiao with SAMD21G18A', 'arch': ''}
+platform:        samd
+  version:         3.4.0; MicroPython 4088aceb3 on 2024-06-06
+  implementation:  (name='micropython', version=(1, 24, 0, 'preview'), _machine='Seeed Xiao with SAMD21G18A', _mpy=774)
+
+memory errors -- need to gc collect !!!
+
+nrf
+{'port': 'nrf52', 'build': '', 'arch': 'armv7emsp', 'family': 'micropython', 'board': 'XIAO nRF52840 Sense with NRF52840', 'cpu': 'NRF52840', 'version': '1.24.0-preview', 'mpy': 'v6.3', 'ver': 'v1.24.0-preview'}
+platform:        nrf52
+  version:         3.4.0; MicroPython 3c8089d1b on 2024-06-06
+  implementation:  (name='micropython', version=(1, 24, 0, 'preview'), _machine='XIAO nRF52840 Sense with NRF52840', _mpy=7942)
+
+RTC not avail
+
+
+esp32c3
+{'port': 'esp32', 'build': '', 'arch': '', 'family': 'micropython', 'board': 'ESP32C3 XIAO with ESP32C3', 'cpu': 'ESP32C3', 'version': '1.24.0-preview', 'mpy': 'v6.3', 'ver': 'v1.24.0-preview'}
+platform:        esp32
+  version:         3.4.0; MicroPython 3c8089d1b on 2024-06-06
+  implementation:  (name='micropython', version=(1, 24, 0, 'preview'), _machine='ESP32C3 XIAO with ESP32C3', _mpy=774)
