@@ -45,3 +45,27 @@ def doSine(per=100, dt=0.01, ncycles=None):
             time.sleep(dt)
         ct = ct + 1
     da.write(0)
+
+
+vtest = [0, 100, 128, 236, 256, 300, 320, 330, 400, 410, 512, 756, 800, 900, 1000, 1023]
+
+
+def doVolts(vlist, dt=0.01, sigp="A2_D2", ncycles=None):
+    da = machine.DAC(0)
+    sp = machine.Pin(sigp, machine.Pin.OUT)
+    sp.high()
+    da.write(0)
+    ct = 0
+    ts = time.ticks_ms()
+    while (not ncycles) or ct < ncycles:
+        for v in vlist:
+            da.write(v)
+            print(time.ticks_diff(time.ticks_ms(), ts), ",", v)
+            time.sleep(dt)
+            sp.low()
+            time.sleep(0.001)
+            sp.high()
+            da.write(0)
+            time.sleep(dt)
+        ct = ct + 1
+    print("Done")
