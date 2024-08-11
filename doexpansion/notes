@@ -208,3 +208,55 @@ esp32c3 had be put into load mode with boot res resreleas bootrelease
 no gps updates
 date on rtc was 2022 1010 (or likethat)
 
+20240811
+esp32c3 works - ADC is maxed at 2.5V (11DB attenuation?)
+can use esptool to see idf:
+
+$ esptool image_info --version 2 ../.pio/build/seeed_xiao_esp32c3/firmware.bin
+esptool.py v4.7.0
+File size: 283376 (bytes)
+Detected image type: ESP32-C3
+
+ESP32-C3 image header
+=====================
+Image version: 1
+Entry point: 0x40381dba
+Segments: 5
+Flash size: 4MB
+Flash freq: 80m
+Flash mode: DIO
+
+ESP32-C3 extended image header
+==============================
+WP pin: 0xee (disabled)
+Flash pins drive settings: clk_drv: 0x0, q_drv: 0x0, d_drv: 0x0, cs0_drv: 0x0, hd_drv: 0x0, wp_drv: 0x0
+Chip ID: 5 (ESP32-C3)
+Minimal chip revision: v0.0, (legacy min_rev = 0)
+Maximal chip revision: v655.35
+
+Segments information
+====================
+Segment   Length   Load addr   File offs  Memory types
+-------  -------  ----------  ----------  ------------
+      1  0x0f0f8  0x3c030020  0x00000018  DROM
+      2  0x00ef8  0x3fc8bc00  0x0000f118  DRAM, BYTE_ACCESSIBLE
+      3  0x2899c  0x42000020  0x00010018  IROM
+      4  0x00ec8  0x3fc8caf8  0x000389bc  DRAM, BYTE_ACCESSIBLE
+      5  0x0ba34  0x40380000  0x0003988c  IRAM
+
+ESP32-C3 image footer
+=====================
+Checksum: 0xc (valid)
+Validation hash: 181b95d016f38cb29339e03d57aa51cf0d4366fe12d61a453099fe6196c8625f (valid)
+
+Application information
+=======================
+Project name: arduino-lib-builder
+App version: esp-idf: v4.4.7 38eeba213a
+Compile time: Mar  5 2024 12:29:20
+ELF file SHA256: fffd5104a0005f0f4eab18fefb405bd24086481231c0ac0b11bf231e3bbf615a
+ESP-IDF: v4.4.7-dirty
+Secure version: 0
+
+platformio.ini: added seeed_xiao_esp32c3_v5 which uses idf 5.2.1
+                seems to work
