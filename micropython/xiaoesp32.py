@@ -29,3 +29,10 @@ def buzzpwm(pin):
     pwm = machine.PWM(pin)
     pwm.duty_u16(0)
     return pwm
+
+
+# ESP32C3 ADC has several options for attenuation
+#   which affect the range
+#   maximum range is attenuation 3 (11DB) for [0, 2.5V] approx range
+#
+adc = machine.ADC(ADC_PIN, atten=3)
