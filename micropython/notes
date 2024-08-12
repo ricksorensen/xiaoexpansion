@@ -35,3 +35,33 @@ esp32c3
 platform:        esp32
   version:         3.4.0; MicroPython 3c8089d1b on 2024-06-06
   implementation:  (name='micropython', version=(1, 24, 0, 'preview'), _machine='ESP32C3 XIAO with ESP32C3', _mpy=774)
+
+
+20240812:
+nrf:
+os.uname()
+(sysname='nrf52', nodename='nrf52', release='1.24.0-preview', version='288a03625 on 2024-08-12', machine='XIAO nRF52840 Sense with NRF52840')
+RTC not available
+
+esp32c3:  (built with 5.0.4)
+os.uname()
+(sysname='esp32', nodename='esp32', release='1.24.0-preview', version='288a03625 on 2024-08-12', machine='XIAOC3 with ESP32C3')
+ADC has 11DB Attenuation, max is 2.5V
+
+rp2:
+os.uname()
+(sysname='rp2', nodename='rp2', release='1.24.0-preview', version='288a03625 on 2024-08-12 (GNU 9.3.1 MinSizeRel)', machine='XIAO RP2040 Local with RP2040')
+
+
+samd21: (os does not have uname)
+--- Sys Info ---
+  platform:        samd
+  version:         3.4.0; MicroPython a5cfb5e24 on 2024-08-12
+  implementation:  (name='micropython', version=(1, 24, 0, 'preview'), _machine='Seeed Xiao with SAMD21G18A', _mpy=774)
+  build:           MicroPython-1.24.0-preview-arm-ASF4-with-newlib3.3.0
+    mpy version: 6
+    mpy sub-version: 3
+    mpy flags:
+  path:            ['', '.frozen', '/lib']
+  unique_id:       b'\xcf\x9e\xa1\xfaPSKT3.1 \xff\x084\x16'
+memory sensitive
