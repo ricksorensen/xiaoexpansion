@@ -259,4 +259,10 @@ ESP-IDF: v4.4.7-dirty
 Secure version: 0
 
 platformio.ini: added seeed_xiao_esp32c3_v5 which uses framework espidf and idf5.2.1
-                does not compile yet because of arduino framework dependencies 
+                does not compile yet because of arduino framework dependencies
+
+seeed_xiao: works, double reset to put in uf2 mode
+seeed_xiao_esp32c3: works, put in load mode (boot then reset), adc is 2.3 v atten
+pico_future: works, put in load mode (boot then reset? double reset?)
+             takes long to compile- downloading new tool set
+
