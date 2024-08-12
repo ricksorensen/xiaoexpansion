@@ -258,5 +258,5 @@ ELF file SHA256: fffd5104a0005f0f4eab18fefb405bd24086481231c0ac0b11bf231e3bbf615
 ESP-IDF: v4.4.7-dirty
 Secure version: 0
 
-platformio.ini: added seeed_xiao_esp32c3_v5 which uses idf 5.2.1
-                seems to work
+platformio.ini: added seeed_xiao_esp32c3_v5 which uses framework espidf and idf5.2.1
+                does not compile yet because of arduino framework dependencies 

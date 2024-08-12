@@ -1,3 +1,5 @@
+Update: 20240811
+
 Basic usage:
 `pio run -e seeed_xiao -t upload`
 
@@ -7,6 +9,9 @@ Known `platformio` build environments (see `platformio.ini` for details):
 - `pico` for the Raspberry Pi PICO (notionally the Seeed SAMD XIAO RP2040) with mbed, standard arduino tools
 needs significant adaptation for XIAO RP2040 to get I2 working
 - `seeed_xiao_esp32c3` for the Seeed XIAO ESP32C3
+- `seeed_xiao_esp32c3_v5`for the Seeed XIAO ESP32C3 using
+
+    `framework=espidf` to try and use IDF v5.2.x.  20240811 not working yet. 
 - `pico_future` for the Seeed XIAO RP2040 using the `earlephilhower` toolset
 preferred option for XIAO 2040
 - `sense_future` for the Seeed XIAO NRF52840 Sense- with mbed
@@ -32,3 +37,4 @@ lib_deps =
         olikraus/U8g2
         https://github.com/Bill2462/PCF8563-Arduino-Library
 ```
+5. GPS is not currently used
