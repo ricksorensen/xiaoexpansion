@@ -18,7 +18,7 @@ MCULIB=xiao$(MP_MCU).mpy
 $(info  "MCU import: $(MCULIB)")
 
 
-MAIN = boot.py querystdin.mpy
+MAIN = querystdin.mpy
 
 MYLIBS = buzzrainbow.mpy  pcfsimp.mpy
 ALLTIME = alltime.mpy
@@ -57,5 +57,11 @@ syslib:
 run: $(RUN)
 	mpremote run $(RUN)
 
+help:
+	echo "Expansion board micropython tests"
+	echo "upload:  default target, load python files to mcu"
+	echo "         MP_PORT port to use default $(MP_PORT)"
+	echo "         MP_MCU mcu to use (samd, rp2, esp32,nrf) default $(MP_MCU)"
+	echo "run: run expansion module"
 ##### RP2
 # mpremote $(MP_PORT) --target lib install ssd1306
