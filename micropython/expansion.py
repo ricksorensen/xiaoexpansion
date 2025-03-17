@@ -95,12 +95,13 @@ qin = querystdin.StdinQuery()
 if adc is None:
     adc = machine.ADC(machine.Pin(mcu.ADC_PIN))
 newvoltage = None
-print("Starting")
+gc.collect()
+print("Starting  mem=", gc.mem_free())
 keepgoing = True
 try:
     while keepgoing:
         gc.collect()
-        gc.mem_free()
+        print(gc.mem_free())
         if (cin := qin.kbin()) is not None:
             vline = qin.kbLine(cin)
             vin = getVoltage(vline, 1023)
@@ -117,6 +118,7 @@ try:
         #   hour, minute, second, dow (0 is sunday), date, month, year (add 2000)
         pcf_time = pcf.get()
         display.fill(0)
+        gc.collect()
         display.text(
             "pDate {:04d}-{:02d}-{:02d}".format(
                 pcf_time[6] + 2000, pcf_time[5], pcf_time[4]
@@ -129,6 +131,7 @@ try:
             0,
             10,
         )
+        gc.collect()
         if rtc is not None:
             rtc_time = rtc.datetime()
             display.text(
@@ -147,6 +150,7 @@ try:
             )
         else:
             display.text("RTC not available", 0, 25)
+        gc.collect()
 
         if newvoltage is not None:
             display.text("vDAC: {:04d}".format(newvoltage), 0, 40)
