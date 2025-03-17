@@ -9,4 +9,4 @@ Using a XIAO SAMD21 to generate voltages in the range [0,3.3V] mapped to range [
 
 ![es32adc](es32c3adc.png)
 
-Shows the received voltage per generate voltate for the 4 attenuation values.
+Shows the received voltage per generate voltage for the 4 attenuation values.
