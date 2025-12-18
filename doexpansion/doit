@@ -3,7 +3,7 @@ echo "build samd21 ..."
 pio run -e seeed_xiao &>build.seeed_xiao
 echo "build pico ..."
 pio run -e pico &>build.pico
-echo "build pico ..."
+echo "build esp32c3 ..."
 pio run -e seeed_xiao_esp32c3 &>build.esp32
 echo "build pico future ..."
 pio run -e pico_future &>build.pifuture
