@@ -186,7 +186,8 @@ void setup() {
   pcf.init();//initialize the clock
   Serial.println("pcf.init ... done");
   Time pcfTime = pcf.getTime();//get current time
-  if (pcfTime.year < 2005) {
+  // year is a byte- if month bit 7 is set, year 19xx, else (default) is 20xx
+  if (pcfTime.year < 20) {
     pcf.stopClock();//stop the clock
     pcf.setYear(22);//set year
     pcf.setMonth(2);//set month
