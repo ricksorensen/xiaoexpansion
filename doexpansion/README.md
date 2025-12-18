@@ -38,3 +38,20 @@ lib_deps =
         https://github.com/Bill2462/PCF8563-Arduino-Library
 ```
 5. GPS is not currently used
+
+
+Pins using arduino/platformio naming. 
++ xiao is my pin numbering CCW from 1-14 starting in the upper left at USB connector.  (5V is pin 14)
+
+| Function | xiao | SAMD21      | RP2040 | RP2035 | NRF52840    | ESP32C3 | ESP32S3 |
+| :---         | ---  | ---         | ---    | ---    | ---         | ---     | ---     |
+| Buzzer   | 4    | A3,PA11         |        |        |             |         |         |
+| I2C      | 5,6  | Default     |        |        |             |         |         |
+| Button   | 2    | A1,PA4          |        |        |             |         |         |
+| ADC      | 3    | A2,PA10          |        |        |             |         |         |
+| DAC      | 1    | A0,PA2          | -      | -      | -           | -       | -       |
+| UART     | 7,8  | PB8,PB9           | -      | -      | -           | -       | -       |
+| CTRL     | 11   | PA6           | -      | -      | -           | -       | -       |
+| LED      |      | LED_BUILTIN | 17     | 17     | LED_BUILTIN | -       | -       | 
+
+End of table
