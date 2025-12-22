@@ -1,6 +1,8 @@
 pio run -t cleanall
 echo "build samd21 ..."
 pio run -e seeed_xiao &>build.seeed_xiao
+echo "build samd21 gps..."
+pio run -e seeed_xiao_gps &>build.seeed_xiao_gps
 echo "build pico ..."
 pio run -e pico &>build.pico
 echo "build esp32c3 ..."
