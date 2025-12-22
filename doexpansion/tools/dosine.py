@@ -1,3 +1,15 @@
+"""Trinkey M0:
+pin01: VBAT                 pin10: VBUS (USB?)
+pin02: GND                  pin09: PA08/D0
+pin03: PA06/D4              pin08: PA02/DAC/AREF/D1
+pin04: PA07/D3              pin07: PA09/D2
+pin05: RESET                pin06: 3.3V
+
+DotStar: CLK:PA01, Data:PA00,
+LED: PA10
+
+"""
+
 import machine
 from math import sin, pi
 import time
@@ -28,6 +40,11 @@ class simpleDotStar:
 
     def init(self):
         self._ds.init()
+
+
+def dotstarOff():
+    ds = simpleDotStar(turnoff=True)
+    ds.deinit()
 
 
 def doSine(per=100, dt=0.01, ncycles=None):
