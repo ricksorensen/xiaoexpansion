@@ -1,7 +1,11 @@
-Update: 20240811
+Update: 20251210
+
+
 
 Basic usage:
 `pio run -e seeed_xiao -t upload`
+note that pio does not seem to upload to nrf when plugged on expansion board.
+
 
 Known `platformio` build environments (see `platformio.ini` for details):
 
@@ -55,3 +59,11 @@ Pins using arduino/platformio naming.
 | LED      |      | LED_BUILTIN | 17     | 17     | LED_BUILTIN | -       | -       | 
 
 End of table
+
+
+ + seeed_xiao: works  led,buzzer/sound, display, pfc clock, adc, dac 
+ + pico: led, buzzer works but is running all the time, display not updating  I2C problem.  No output on usb/serial
+ + pico_future: works led,buzzer/sound, display, pfc clock, adc, (no dac)
+ + seeed_xiao_esp32c3: works (no led),buzzer/sound, display, pfc clock, adc, (no dac)
+ + sense_future: works  led,buzzer/sound, display, pfc clock, adc,(no dac) 
++  sense_future_adafruit: works  led,buzzer/sound, display, pfc clock, adc,(no dac) 
