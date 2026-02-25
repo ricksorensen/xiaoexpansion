@@ -5,7 +5,7 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial) ;        // ESP32C3 Serial seems up if powered from USB with no terminal pgm connected
+  while (!Serial) ;        // ESP32C3/C6 Serial seems up if powered from USB with no terminal pgm connected
   delay(5000);
   Serial.println("setup: Starting up");
   u8x8.begin();
