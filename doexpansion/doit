@@ -7,6 +7,8 @@ echo "build pico ..."
 pio run -e pico &>build.pico
 echo "build esp32c3 ..."
 pio run -e seeed_xiao_esp32c3 &>build.esp32
+echo "build esp32c6 ..."
+pio run -e seeed_xiao_esp32c6 &>build.esp32c6
 echo "build pico future ..."
 pio run -e pico_future &>build.pifuture
 echo "build nrf future ..."

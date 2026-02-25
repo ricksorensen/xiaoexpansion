@@ -42,24 +42,36 @@ PCF8563 pcf;
 #define LOOP_DELAY 1000        // ms to delay at end of loop
 #define BUTTON_INTERRUPT 1     // 0 to use polling, 1 to user interrupts
 #define BUTTON_INTERRUPT_MODE FALLING
+#if defined(ARDUINO_XIAO_ESP32C6)
+#define BUTTON_PIN D1  // A1 not defined for ESP32-C6
+#else
 #define BUTTON_PIN A1  // D1 not defined for XIAO_M0
+#endif
 #if defined(ARDUINO_XIAO_ESP32C3)
 #define LED_PIN (-1)    // undefined
+#elif defined(ARDUINO_XIAO_ESP32C6)
+#define LED_PIN (15)   // built-in blue LED
 #elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
 #define LED_PIN (17)  //xiao pin    ... avoid conflict with PICO W 
 #else
 #define LED_PIN    LED_BUILTIN
 #endif
 
+#if defined(ARDUINO_XIAO_ESP32C6)
+#define BUZZER_PIN D3   // A3 not defined for ESP32-C6
+#define DAC_PIN    D0   // no DAC on ESP32-C6
+#define ADC_PIN    D2
+#else
 #define BUZZER_PIN A3   //D3 didn't work for SAMD
 #define DAC_PIN    A0   // only on SAMD
-#define DAC_RESOLUTION 10  // only SAMD21
 #define ADC_PIN    A2
+#endif
+#define DAC_RESOLUTION 10  // only SAMD21
 // default ADC_RESOLUTION=12 for XIAO_M0
 //                        12 for NRF mbed and NRF adafruit core
 //                        12 for rp2040
 //                        12 for ESP32C3 ... not change able
-#if defined(ARDUINO_XIAO_ESP32C3)
+#if defined(ARDUINO_XIAO_ESP32C3) || defined(ARDUINO_XIAO_ESP32C6)
 #define MYADCRESOLUTION 12
 #else
 #define MYADCRESOLUTION ADC_RESOLUTION
@@ -85,7 +97,7 @@ static volatile unsigned long buttonCt=0;
 
 #if BUTTON_INTERRUPT
 static volatile bool buttonState = false;
-#if defined(ARDUINO_XIAO_ESP32C3)
+#if defined(ARDUINO_XIAO_ESP32C3) || defined(ARDUINO_XIAO_ESP32C6)
 static void IRAM_ATTR buttonpush(void) {
   buttonState = true;
   buttonCt++;
@@ -104,6 +116,8 @@ static void dumpinfo(void) {
   Serial.println("XIAO_M0");
 #elif defined(ARDUINO_XIAO_ESP32C3)
   Serial.println("XIAO_ESP32C3");
+#elif defined(ARDUINO_XIAO_ESP32C6)
+  Serial.println("XIAO_ESP32C6");
 #elif defined(ARDUINO_RASPBERRY_PI_PICO)
   Serial.println("PICO");
 #elif defined(ARDUINO_SEEED_XIAO_RP2040)
@@ -148,7 +162,7 @@ void setup() {
   dacstate();
 #endif  
 #if not defined(ARDUINO_XIAO_ESP32C3)
-  pinMode(LED_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);  // ESP32-C6 has LED on pin 15
 #endif
 #if defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
   pinMode(25, OUTPUT);digitalWrite(25, 1);  // turn off all
@@ -163,13 +177,13 @@ void setup() {
   dumpinfo();
 
 #if BUTTON_INTERRUPT
-#if defined(ARDUINO_XIAO_ESP32C3)
+#if defined(ARDUINO_XIAO_ESP32C3) || defined(ARDUINO_XIAO_ESP32C6)
   attachInterrupt(BUTTON_PIN, buttonpush, FALLING);
 #else
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonpush, FALLING);
 #endif
 #endif
-#if not defined(ARDUINO_XIAO_ESP32C3)
+#if not defined(ARDUINO_XIAO_ESP32C3) && not defined(ARDUINO_XIAO_ESP32C6)
   analogReadResolution(MYADCRESOLUTION);   // should be 12
 #if defined(ARDUINO_SEEED_XIAO_M0)
   analogWriteResolution(DAC_RESOLUTION);  // should be 10
@@ -273,7 +287,7 @@ void loop() {
   }
 #endif
 #if not defined(ARDUINO_XIAO_ESP32C3)
-  digitalWrite(LED_PIN, digitalRead(BUTTON_PIN));
+  digitalWrite(LED_PIN, digitalRead(BUTTON_PIN));  // C6 has LED, this works
 #endif
   if (buzzOn) {
     doBuzzer(BUZZER_PIN);
