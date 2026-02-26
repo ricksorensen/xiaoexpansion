@@ -53,7 +53,7 @@ TinyGPSPlus GPS;
 #if defined(ARDUINO_XIAO_ESP32C3)
 #define LED_PIN (-1)    // undefined
 #elif defined(ARDUINO_XIAO_ESP32C6)
-#define LED_PIN (15)   // built-in blue LED
+#define LED_PIN (8)    // RGB NeoPixel on GPIO 8, use neopixelWrite()
 #elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
 #define LED_PIN (17)  //xiao pin    ... avoid conflict with PICO W 
 #else

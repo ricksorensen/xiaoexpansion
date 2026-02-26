@@ -49,16 +49,16 @@ lib_deps =
 Pins using arduino/platformio naming. 
 + xiao is my pin numbering CCW from 1-14 starting in the upper left at USB connector.  (5V is pin 14)
 
-| Function | xiao | SAMD21      | RP2040 | RP2035 | NRF52840    | ESP32C3 | ESP32S3 |
-| :---         | ---  | ---         | ---    | ---    | ---         | ---     | ---     |
-| Buzzer   | 4    | A3,PA11         |        |        |             |         |         |
-| I2C      | 5,6  | Default     |        |        |             |         |         |
-| Button   | 2    | A1,PA4          |        |        |             |         |         |
-| ADC      | 3    | A2,PA10          |        |        |             |         |         |
-| DAC      | 1    | A0,PA2          | -      | -      | -           | -       | -       |
-| UART     | 7,8  | PB8,PB9           | -      | -      | -           | -       | -       |
-| CTRL     | 11   | PA6           | -      | -      | -           | -       | -       |
-| LED      |      | LED_BUILTIN | 17     | 17     | LED_BUILTIN | -       | -       | 
+| Function | xiao | SAMD21      | RP2040 | RP2035 | NRF52840    | ESP32C3 | ESP32S3 | ESP32C6 |
+| :---         | ---  | ---         | ---    | ---    | ---         | ---     | ---     | ---     |
+| Buzzer   | 4    | A3,PA11         |        |        |             |         |         | D3      |
+| I2C      | 5,6  | Default     |        |        |             |         |         | Default |
+| Button   | 2    | A1,PA4          |        |        |             |         |         | D1      |
+| ADC      | 3    | A2,PA10          |        |        |             |         |         | D2      |
+| DAC      | 1    | A0,PA2          | -      | -      | -           | -       | -       | -       |
+| UART     | 7,8  | PB8,PB9           | -      | -      | -           | -       | -       | -       |
+| CTRL     | 11   | PA6           | -      | -      | -           | -       | -       | -       |
+| LED      |      | LED_BUILTIN | 17     | 17     | LED_BUILTIN | -       | -       | 8 (RGB) |
 
 End of table
 
@@ -67,6 +67,6 @@ End of table
  + pico: led, buzzer works but is running all the time, display not updating  I2C problem.  No output on usb/serial
  + pico_future: works led,buzzer/sound, display, pfc clock, adc, (no dac)
  + seeed_xiao_esp32c3: works (no led),buzzer/sound, display, pfc clock, adc, (no dac)
- + seeed_xiao_esp32c6: untested - code ready, similar to C3 but has LED on pin 15
+ + seeed_xiao_esp32c6: works (RGB NeoPixel on GPIO 8), buzzer/sound, display, pfc clock, adc (no dac)
  + sense_future: works  led,buzzer/sound, display, pfc clock, adc,(no dac) 
  +  sense_future_adafruit: works  led,buzzer/sound, display, pfc clock, adc,(no dac)

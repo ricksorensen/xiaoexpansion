@@ -281,3 +281,14 @@ seeed_xiao_esp32c3: works, put in load mode (boot then reset), adc is 2.3 v atte
 pico_future: works, put in load mode (boot then reset? double reset?)
              takes long to compile- downloading new tool set
 
+--------------------------------------------
+ESP32-C6:
+  Seeed C6 Arduino core uses D0-D3 instead of A0-A3.
+  BUTTON_PIN    D1
+  LED_PIN       8 (RGB NeoPixel, via neopixelWrite())
+  BUZZER_PIN    D3
+  DAC_PIN       D0 (Not available, C6 has no DAC)
+  ADC_PIN       D2
+  SD_CS_PIN     D2 (Conflicts with ADC if both used)
+  PIN_WIRE_SCL  Default
+  PIN_WIRE_SDA  Default

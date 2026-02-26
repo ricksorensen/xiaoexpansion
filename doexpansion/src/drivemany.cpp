@@ -50,7 +50,7 @@ PCF8563 pcf;
 #if defined(ARDUINO_XIAO_ESP32C3)
 #define LED_PIN (-1)    // undefined
 #elif defined(ARDUINO_XIAO_ESP32C6)
-#define LED_PIN (15)   // built-in blue LED
+#define LED_PIN (8)    // RGB NeoPixel on GPIO 8, use neopixelWrite()
 #elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
 #define LED_PIN (17)  //xiao pin    ... avoid conflict with PICO W 
 #else
@@ -161,8 +161,8 @@ void setup() {
   }
   dacstate();
 #endif  
-#if not defined(ARDUINO_XIAO_ESP32C3)
-  pinMode(LED_PIN, OUTPUT);  // ESP32-C6 has LED on pin 15
+#if not defined(ARDUINO_XIAO_ESP32C3) && not defined(ARDUINO_XIAO_ESP32C6)
+  pinMode(LED_PIN, OUTPUT);  // C6 NeoPixel doesn't need pinMode
 #endif
 #if defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
   pinMode(25, OUTPUT);digitalWrite(25, 1);  // turn off all
@@ -286,8 +286,15 @@ void loop() {
     buzzOn = !buzzOn;
   }
 #endif
-#if not defined(ARDUINO_XIAO_ESP32C3)
-  digitalWrite(LED_PIN, digitalRead(BUTTON_PIN));  // C6 has LED, this works
+#if defined(ARDUINO_XIAO_ESP32C6)
+  // RGB NeoPixel on GPIO 8: blue when button pressed, off otherwise
+  if (digitalRead(BUTTON_PIN) == LOW) {
+    neopixelWrite(LED_PIN, 0, 0, 64);  // blue glow
+  } else {
+    neopixelWrite(LED_PIN, 0, 0, 0);   // off
+  }
+#elif not defined(ARDUINO_XIAO_ESP32C3)
+  digitalWrite(LED_PIN, digitalRead(BUTTON_PIN));
 #endif
   if (buzzOn) {
     doBuzzer(BUZZER_PIN);

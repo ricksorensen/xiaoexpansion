@@ -49,7 +49,7 @@ Code uses `#ifdef` branching based on PlatformIO-injected defines:
 | `SEEED_XIAO_NRF52840_SENSE` | XIAO nRF52840 (mbed core) |
 
 ### Key per-board differences:
-- **LED_PIN**: SAMD21/nRF52840 use `LED_BUILTIN`, RP2040 uses `17`, ESP32-C3 has none (`-1`), ESP32-C6 has LED on pin 15
+- **LED_PIN**: SAMD21/nRF52840 use `LED_BUILTIN`, RP2040 uses `17`, ESP32-C3 has none (`-1`), ESP32-C6 has RGB NeoPixel on GPIO 8
 - **DAC**: Only SAMD21 has a true DAC (pin A0, 10-bit)
 - **ADC resolution**: All 12-bit; ESP32 chips can't change resolution via `analogReadResolution()`
 - **Interrupts**: ESP32 ISR needs `IRAM_ATTR`; `FALLING` value differs across platforms
@@ -66,11 +66,13 @@ Code uses `#ifdef` branching based on PlatformIO-injected defines:
 - ✅ XIAO RP2040: Working (no DAC)
 - ✅ XIAO nRF52840 Sense: Working (both cores)
 - ⚠️ Raspberry Pi Pico (mbed): I2C issues, no display
-- 🔧 XIAO ESP32-C6: In progress
+- ✅ XIAO ESP32-C6: Working on hardware (RGB NeoPixel on GPIO 8, SD card tested on D2, no DAC)
 
 ## Notes for AI Assistants
 - When modifying board support, update ALL of: `drivemany.cpp`, `drivegps.cpp`, `platformio.ini`, `README.md`, `notes`, and the `doit` script
 - The `build_src_filter` in `[env]` excludes test files; only `drivemany.cpp` and `playsong.cpp/h` compile by default
 - Pin names (A0–A3) map to different GPIO numbers per board — see `notes` file for full mappings
+- **ESP32-C6 pin naming**: The Seeed C6 Arduino core does NOT define `A0`–`A3`. Use `D0`–`D3` instead. This is a key difference from ESP32-C3.
+- **ESP32-C6 LED & SD Card**: The C6 has an RGB NeoPixel on GPIO 8 (use `neopixelWrite()`). The SD card CS pin is D2, which conflicts with `ADC_PIN` if both are used simultaneously.
 - ESP32 boards need `IRAM_ATTR` on ISR functions
 - The `while(!Serial);` in setup blocks forever if no terminal is connected (known issue on ESP32)

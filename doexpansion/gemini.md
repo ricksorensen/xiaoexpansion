@@ -65,7 +65,7 @@ Code uses `#ifdef` branching based on PlatformIO-injected defines:
 - ✅ XIAO RP2040: Working (no DAC)
 - ✅ XIAO nRF52840 Sense: Working (both cores)
 - ⚠️ Raspberry Pi Pico (mbed): I2C issues, no display
-- ✅ XIAO ESP32-C6: Compiles, untested on hardware (has LED on pin 15, no DAC)
+- ✅ XIAO ESP32-C6: Working on hardware (RGB NeoPixel on GPIO 8, SD card tested on D2, no DAC)
 
 ## Completed
 - **XIAO ESP32-C6** support added (2026-02-25)
@@ -79,5 +79,6 @@ Code uses `#ifdef` branching based on PlatformIO-injected defines:
 - The `build_src_filter` in `[env]` excludes test files; only `drivemany.cpp` and `playsong.cpp/h` compile by default
 - Pin names (A0–A3) map to different GPIO numbers per board — see `notes` file for full mappings
 - **ESP32-C6 pin naming**: The Seeed C6 Arduino core does NOT define `A0`–`A3`. Use `D0`–`D3` instead. This is a key difference from ESP32-C3.
+- **ESP32-C6 LED & SD Card**: The C6 has an RGB NeoPixel on GPIO 8 (use `neopixelWrite()`). The SD card CS pin is D2, which conflicts with `ADC_PIN` if both are used simultaneously.
 - ESP32 boards need `IRAM_ATTR` on ISR functions
 - The `while(!Serial);` in setup blocks forever if no terminal is connected (known issue on ESP32)
