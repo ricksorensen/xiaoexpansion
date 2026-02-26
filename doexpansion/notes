@@ -75,6 +75,21 @@ ESP32C3:
     pin ADC GPIO0 - GPIO4, GPIO5 is ADC2 used by WIFI 4 analog in pins xiao
         XIAO A0-A3 == GPIO2-GPIO5 analog in pins
 
+ESP32C6:
+  .platformio/packages/framework-arduinoespressif32/variants/XIAO_ESP32C6
+    BUTTON_PIN    D1==A1
+    LED_PIN       LED_BUILTIN==15  (blue LED)
+    BUZZER_PIN    A3==D3
+    DAC_PIN       (none)
+    ADC_PIN       A2==D2
+    PIN_WIRE_SCL     SCL==D5
+    PIN_WIRE_SDA     SDA==D4
+    no DAC
+    pin ADC similar to C3
+    Has WiFi 6 and BLE 5.3
+    Has 15 GPIO pins
+    ARDUINO_XIAO_ESP32C6 define
+
 .nRF52840 (adafruitnrf52, mbed-seeed):
   .platformio/packages/framework-arduinoadafruitnrf52-seeed/variants/Seeed_XIAO_nRF52840
  .platformio/packages/framework-arduino-mbed-seeed/variants/SEEED_XIAO_NRF52840_SENSE 
@@ -266,3 +281,14 @@ seeed_xiao_esp32c3: works, put in load mode (boot then reset), adc is 2.3 v atte
 pico_future: works, put in load mode (boot then reset? double reset?)
              takes long to compile- downloading new tool set
 
+--------------------------------------------
+ESP32-C6:
+  Seeed C6 Arduino core uses D0-D3 instead of A0-A3.
+  BUTTON_PIN    D1
+  LED_PIN       8 (RGB NeoPixel, via neopixelWrite())
+  BUZZER_PIN    D3
+  DAC_PIN       D0 (Not available, C6 has no DAC)
+  ADC_PIN       D2
+  SD_CS_PIN     D2 (Conflicts with ADC if both used)
+  PIN_WIRE_SCL  Default
+  PIN_WIRE_SDA  Default
