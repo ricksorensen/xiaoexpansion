@@ -66,6 +66,7 @@ void reconnectMQTT();
 void setupWebServer();
 void handleRoot();
 void handleApiData();
+bool checkAuth();
 
 void setup() {
   Serial.begin(115200);
@@ -110,22 +111,102 @@ void setup() {
   Serial.println("HTTP Server Started");
 }
 
+void reconnectMQTT() {
+  if (mqttClient.connected())
+    return;
+  Serial.print("Attempting MQTT connection...");
+  if (mqttClient.connect("ESP32_C6_AirQuality", mqtt_user, mqtt_password)) {
+    Serial.println("connected");
+
+    // Publish Home Assistant auto-discovery payloads
+    const char *base_topic = "homeassistant/sensor/airquality_c6";
+    const char *state_topic = "airquality/state";
+
+    struct SensorDef {
+      const char *id;
+      const char *name;
+      const char *unit;
+      const char *device_class;
+      const char *val_tpl;
+    };
+
+    SensorDef sensors[] = {
+        {"temp", "Temperature",
+         "\xC2\xB0"
+         "C",
+         "temperature", "{{ value_json.temperature | round(1) }}"},
+        {"hum", "Humidity", "%", "humidity",
+         "{{ value_json.humidity | round(1) }}"},
+        {"pm25", "PM2.5", "\xC2\xB5g/m\xC2\xB3", "pm25",
+         "{{ value_json.pm2_5 }}"},
+        {"voc", "VOC Raw", "", "aqi", "{{ value_json.voc_raw }}"},
+        {"nox", "NOx Raw", "", "aqi", "{{ value_json.nox_raw }}"},
+        {"pres", "Pressure", "hPa", "atmospheric_pressure",
+         "{{ value_json.pressure | round(1) }}"},
+        {"spatemp", "SPA Temperature",
+         "\xC2\xB0"
+         "C",
+         "temperature", "{{ value_json.spa_temp | round(1) }}"}};
+
+    for (int i = 0; i < 7; i++) {
+      StaticJsonDocument<512> doc;
+      doc["name"] = String("AirQuality ") + sensors[i].name;
+      doc["state_topic"] = state_topic;
+      if (strlen(sensors[i].unit) > 0)
+        doc["unit_of_measurement"] = sensors[i].unit;
+      doc["device_class"] = sensors[i].device_class;
+      doc["value_template"] = sensors[i].val_tpl;
+      doc["unique_id"] = String("airquality_c6_") + sensors[i].id;
+
+      JsonObject device = doc.createNestedObject("device");
+      JsonArray identifiers = device.createNestedArray("identifiers");
+      identifiers.add("airquality_c6_device");
+      device["name"] = "ESP32-C6 Air Quality Monitor";
+      device["model"] = "XIAO ESP32-C6 Expansion";
+      device["manufacturer"] = "Custom";
+
+      String payload;
+      serializeJson(doc, payload);
+      String topic = String(base_topic) + "_" + sensors[i].id + "/config";
+      mqttClient.publish(topic.c_str(), payload.c_str(), true); // Retained
+    }
+  } else {
+    Serial.print("failed, rc=");
+    Serial.print(mqttClient.state());
+    Serial.println(" try again in 5 seconds");
+  }
+}
+
 void loop() {
-  // Ensure MQTT connection
-  // if (!mqttClient.connected()) {
-  //     reconnectMQTT();
-  // }
-  // mqttClient.loop();
+  if (!mqttClient.connected()) {
+    static unsigned long lastReconnectAttempt = 0;
+    if (millis() - lastReconnectAttempt > 5000) {
+      lastReconnectAttempt = millis();
+      reconnectMQTT();
+    }
+  }
+  mqttClient.loop();
 
   server.handleClient();
 
-  // Non-blocking delay for reading sensors
   if (millis() - lastReadTime >= readInterval) {
     lastReadTime = millis();
     readSensors();
     updateOLED();
 
-    // TODO: Publish data to MQTT
+    if (mqttClient.connected()) {
+      StaticJsonDocument<200> doc;
+      doc["temperature"] = tempC;
+      doc["humidity"] = humidity;
+      doc["pm2_5"] = pm25;
+      doc["voc_raw"] = srawVoc;
+      doc["nox_raw"] = srawNox;
+      doc["pressure"] = pressure_hPa;
+      doc["spa_temp"] = spa06_tempC;
+      String payload;
+      serializeJson(doc, payload);
+      mqttClient.publish("airquality/state", payload.c_str());
+    }
   }
 }
 
@@ -261,11 +342,125 @@ void setupWebServer() {
   server.on("/api/data", HTTP_GET, handleApiData);
 }
 
+bool checkAuth() {
+  // Define credentials inside - in a real app, store these securely or make
+  // configurable
+  const char *www_username = "admin";
+  const char *www_password = "password123";
+  if (!server.authenticate(www_username, www_password)) {
+    server.requestAuthentication();
+    return false;
+  }
+  return true;
+}
+
 void handleRoot() {
-  server.send(200, "text/plain", "Air Quality Monitor UI - Under Construction");
+  if (!checkAuth())
+    return;
+
+  String html = R"rawliteral(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Air Quality Monitor</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --panel: #16213e;
+    --text: #e94560;
+    --highlight: #0f3460;
+  }
+  body {
+    background: var(--bg); color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 20px;
+  }
+  .container { max-width: 800px; margin: auto; }
+  .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+  .tab { 
+    padding: 10px 20px; background: var(--panel); cursor: pointer;
+    border-radius: 5px; transition: 0.3s;
+  }
+  .tab.active { background: var(--highlight); color: #fff; }
+  .panel { display: none; background: var(--panel); padding: 20px; border-radius: 8px; }
+  .panel.active { display: block; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+  .card { 
+    background: #0f3460; padding: 15px; border-radius: 8px; text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  }
+  .card h3 { margin: 0 0 10px 0; color: #a2a2bd; font-size: 14px; }
+  .card .val { font-size: 24px; font-weight: bold; color: var(--text); }
+  input, button { padding: 10px; margin-top: 10px; border-radius: 5px; border: none; }
+  button { background: var(--text); color: white; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Air Quality Monitor</h2>
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('dash')">Dashboard</div>
+    <div class="tab" onclick="showTab('settings')">Settings</div>
+  </div>
+
+  <div id="dash" class="panel active">
+    <div class="grid">
+      <div class="card"><h3>Temperature (DHT)</h3><div class="val" id="t-dht">-- &deg;C</div></div>
+      <div class="card"><h3>Humidity (DHT)</h3><div class="val" id="h-dht">-- %</div></div>
+      <div class="card"><h3>Temperature (SPA)</h3><div class="val" id="t-spa">-- &deg;C</div></div>
+      <div class="card"><h3>Pressure</h3><div class="val" id="p-spa">-- hPa</div></div>
+      <div class="card"><h3>PM 2.5</h3><div class="val" id="v-pm">-- &micro;g/m&sup3;</div></div>
+      <div class="card"><h3>VOC (Raw)</h3><div class="val" id="v-voc">--</div></div>
+      <div class="card"><h3>NOx (Raw)</h3><div class="val" id="v-nox">--</div></div>
+    </div>
+  </div>
+
+  <div id="settings" class="panel">
+    <h3>MQTT Configuration</h3>
+    <p>Update broker details securely (Coming Soon).</p>
+    <input type="text" placeholder="Broker IP"><br>
+    <button>Save configuration</button>
+  </div>
+</div>
+
+<script>
+  function showTab(id) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  async function updateData() {
+    try {
+      const res = await fetch('/api/data');
+      if (res.status === 401) return; // Auth required, ignore fetch if kicked out
+      const data = await res.json();
+      document.getElementById('t-dht').innerText = data.temperature.toFixed(1) + ' °C';
+      document.getElementById('h-dht').innerText = data.humidity.toFixed(1) + ' %';
+      document.getElementById('t-spa').innerText = data.spa_temp.toFixed(1) + ' °C';
+      document.getElementById('p-spa').innerText = data.pressure.toFixed(1) + ' hPa';
+      document.getElementById('v-pm').innerText = data.pm2_5 + ' µg/m³';
+      document.getElementById('v-voc').innerText = data.voc_raw;
+      document.getElementById('v-nox').innerText = data.nox_raw;
+    } catch(e) { console.error('Fetch error:', e); }
+  }
+  
+  setInterval(updateData, 5000);
+  updateData();
+</script>
+</body>
+</html>
+)rawliteral";
+
+  server.send(200, "text/html", html);
 }
 
 void handleApiData() {
+  if (!checkAuth())
+    return; // Secure API endpoint as well
+
   StaticJsonDocument<200> doc;
   doc["temperature"] = tempC;
   doc["humidity"] = humidity;

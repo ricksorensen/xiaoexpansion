@@ -14,6 +14,7 @@ Known `platformio` build environments (see `platformio.ini` for details):
 needs significant adaptation for XIAO RP2040 to get I2 working
 - `seeed_xiao_esp32c3` for the Seeed XIAO ESP32C3
 - `seeed_xiao_esp32c6` for the Seeed XIAO ESP32C6
+- `airquality_c6` for the ESP32-C6 Air Quality Monitor (DHT11, SGP41, SPA06, HM3301)
 - `seeed_xiao_esp32c3_v5`for the Seeed XIAO ESP32C3 using
 
     `framework=espidf` to try and use IDF v5.2.x.  20240811 not working yet. 
@@ -68,5 +69,6 @@ End of table
  + pico_future: works led,buzzer/sound, display, pfc clock, adc, (no dac)
  + seeed_xiao_esp32c3: works (no led),buzzer/sound, display, pfc clock, adc, (no dac)
  + seeed_xiao_esp32c6: works (RGB NeoPixel on GPIO 8), buzzer/sound, display, pfc clock, adc (no dac)
+ + airquality_c6: Dedicated air quality monitor on ESP32-C6 with WebUI and Home Assistant Auto-Discovery using TCA9548A multiplexer.
  + sense_future: works  led,buzzer/sound, display, pfc clock, adc,(no dac) 
  +  sense_future_adafruit: works  led,buzzer/sound, display, pfc clock, adc,(no dac)

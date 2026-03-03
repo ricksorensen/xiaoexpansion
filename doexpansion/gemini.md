@@ -1,6 +1,6 @@
 # Gemini AI Context — XIAO Expansion Board Project
 
-**Last updated:** 2026-02-25 (post ESP32-C6 integration)
+**Last updated:** 2026-03-02 (Added ESP32-C6 Air Quality Monitor)
 
 ## Project Overview
 
@@ -20,6 +20,7 @@ doexpansion/
 ├── src/
 │   ├── drivemany.cpp       # Main application (display, RTC, buzzer, ADC, button)
 │   ├── drivegps.cpp        # GPS variant (adds TinyGPSPlus on Serial1)
+│   ├── airquality.cpp      # ESP32-C6 Air Quality Monitor (DHT11, SGP41, SPA06, HM3301 with WebUI & MQTT)
 │   ├── playsong.cpp        # Buzzer melody player (portable, no board-specific code)
 │   ├── playsong.h          # Melody types/declarations
 │   ├── chkdisp.cpp         # Test: font/display checker (standalone)
@@ -73,9 +74,14 @@ Code uses `#ifdef` branching based on PlatformIO-injected defines:
   - Requires `platform_packages` override for toolchain v14.2.0
   - Pin names are `D0`–`D3` (not `A0`–`A3` like C3)
   - Python deps: `intelhex`, `rich_click` needed for esptool v5
+- **ESP32-C6 Air Quality Monitor** (`airquality_c6` env)
+  - Uses `TCA9548A` multiplexer for I2C (Pa.HUB)
+  - Sensors: `SGP41` (Voc/NOx), `SPA06-003` (Pressure/Temp), `HM3301` (PM2.5), `DHT11`
+  - Features: WiFiManager, WebUI, Home Assistant MQTT Discovery
+  - Due to `esptool` argument changes on C6, standard `platformio-build.py` had to be modified to remove `--flash-mode` / `--flash-freq` / `--flash-size` arguments.
 
 ## Notes for AI Assistants
-- When modifying board support, update ALL of: `drivemany.cpp`, `drivegps.cpp`, `platformio.ini`, `README.md`, `notes`, and the `doit` script
+- When modifying board support, update ALL of: `drivemany.cpp`, `drivegps.cpp`, `airquality.cpp`, `platformio.ini`, `README.md`, `notes`, and the `doit` script
 - The `build_src_filter` in `[env]` excludes test files; only `drivemany.cpp` and `playsong.cpp/h` compile by default
 - Pin names (A0–A3) map to different GPIO numbers per board — see `notes` file for full mappings
 - **ESP32-C6 pin naming**: The Seeed C6 Arduino core does NOT define `A0`–`A3`. Use `D0`–`D3` instead. This is a key difference from ESP32-C3.
