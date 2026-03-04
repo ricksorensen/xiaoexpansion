@@ -2,7 +2,9 @@
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 #include <WebServer.h>
-#include <WiFiManager.h>
+#include <WiFi.h>
+#include <WiFiMulti.h>
+#include <Preferences.h>
 #include <Wire.h>
 
 // --- Sensor & Display Libraries ---
@@ -10,21 +12,23 @@
 #include "SPL07-003.h"
 #include "Seeed_HM330X.h"
 #include "TCA9548.h"
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <U8x8lib.h>
 #include <SensirionI2CSgp41.h>
 
 // --- Pin Definitions ---
 // On the XIAO ESP32-C6, A0/D0 is typically GPIO 2, but Seeed core uses D0-D3
 // names
-#define DHTPIN                                                                 \
-  D0 // Using D0 as it maps to the A0 pin on the expansion board shield
+#define DHTPIN D0 // Using D0 as it maps to the A0 pin on the expansion board shield
 #define DHTTYPE DHT11
 
 // --- Hardware Objects ---
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+#if defined(ARDUINO_XIAO_ESP32C3) || defined(ARDUINO_XIAO_ESP32C6)
+// For ESP32-C3 and ESP32-C6, specifying the clock and data pins helps resolve I2C initialisation issues
+U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE, /* clock=*/ SCL, /* data=*/ SDA);
+#else
+// use default I2C
+U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
+#endif
 
 TCA9548 multiplexer(0x70); // Default Pa.HUB address
 
@@ -35,12 +39,16 @@ SPL07_003 spa06;
 
 WebServer server(80);
 
+// --- Settings Management ---
+Preferences preferences;
+WiFiMulti wifiMulti;
+bool isSetupMode = false;
+
 // --- MQTT Configuration ---
-// TO DO: Replace with your actual Home Assistant IP and credentials
-const char *mqtt_server = "192.168.1.100";
-const int mqtt_port = 1883;
-const char *mqtt_user = "your_mqtt_user";
-const char *mqtt_password = "your_mqtt_pass";
+String mqtt_server = "";
+int mqtt_port = 1883;
+String mqtt_user = "";
+String mqtt_password = "";
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -58,15 +66,120 @@ unsigned long lastReadTime = 0;
 const long readInterval = 5000; // Read sensors every 5 seconds
 
 // --- Function Declarations ---
-void setupDisplay();
+
 void setupSensors();
 void readSensors();
+void loadSettings();
+void startSetupPortal();
+void handleSetupRoot();
+void handleSetupSave();
+
 void updateOLED();
 void reconnectMQTT();
 void setupWebServer();
 void handleRoot();
 void handleApiData();
-bool checkAuth();
+void handleSaveConfig();
+int checkAuth();
+
+void loadSettings() {
+  preferences.begin("airquality", false);
+  
+  // Load WiFi Networks
+  String ssid1 = preferences.getString("ssid1", "");
+  String pass1 = preferences.getString("pass1", "");
+  String ssid2 = preferences.getString("ssid2", "");
+  String pass2 = preferences.getString("pass2", "");
+  
+  if(ssid1.length() > 0) wifiMulti.addAP(ssid1.c_str(), pass1.c_str());
+  if(ssid2.length() > 0) wifiMulti.addAP(ssid2.c_str(), pass2.c_str());
+
+  // Load MQTT Settings
+  mqtt_server = preferences.getString("mqtt_ip", "");
+  mqtt_port = preferences.getInt("mqtt_port", 1883);
+  mqtt_user = preferences.getString("mqtt_user", "");
+  mqtt_password = preferences.getString("mqtt_pass", "");
+  
+  preferences.end();
+}
+
+void handleSetupRoot() {
+  String html = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1'><style>body{font-family:sans-serif;padding:20px;background:#1a1a2e;color:#fff;} input,button{padding:10px;margin-top:5px;width:100%;box-sizing:border-box;border-radius:5px;} button{background:#e94560;color:#fff;border:none;cursor:pointer;} .card{background:#16213e;padding:20px;border-radius:10px;}</style></head><body>";
+  html += "<h2>AirQuality Setup</h2><div class='card'>";
+  html += "<form action='/save' method='POST'>";
+  html += "<h3>WiFi Network 1</h3>";
+  html += "<input type='text' name='ssid1' placeholder='SSID 1'><br>";
+  html += "<input type='password' name='pass1' placeholder='Password 1'><br>";
+  html += "<h3>WiFi Network 2 (Optional Fallback)</h3>";
+  html += "<input type='text' name='ssid2' placeholder='SSID 2'><br>";
+  html += "<input type='password' name='pass2' placeholder='Password 2'><br>";
+  html += "<h3>WebUI Credentials</h3>";
+  html += "<input type='text' name='admin_user' placeholder='Admin Username' value='admin'><br>";
+  html += "<input type='password' name='admin_pass' placeholder='Admin Password (password123)'><br>";
+  html += "<input type='text' name='read_user' placeholder='Read-Only Username' value='user'><br>";
+  html += "<input type='password' name='read_pass' placeholder='Read-Only Password (read123)'><br>";
+  html += "<h3>MQTT Broker</h3>";
+  html += "<input type='text' name='mqtt_ip' placeholder='Broker IP (e.g. 192.168.1.100)'><br>";
+  html += "<input type='number' name='mqtt_port' placeholder='Port (1883)' value='1883'><br>";
+  html += "<input type='text' name='mqtt_user' placeholder='MQTT Username'><br>";
+  html += "<input type='password' name='mqtt_pass' placeholder='MQTT Password'><br>";
+  html += "<button type='submit'>Save and Reboot</button>";
+  html += "</form></div></body></html>";
+  server.send(200, "text/html", html);
+}
+
+void handleSetupSave() {
+  preferences.begin("airquality", false);
+  if(server.hasArg("ssid1")) preferences.putString("ssid1", server.arg("ssid1"));
+  if(server.hasArg("pass1")) preferences.putString("pass1", server.arg("pass1"));
+  if(server.hasArg("ssid2")) preferences.putString("ssid2", server.arg("ssid2"));
+  if(server.hasArg("pass2")) preferences.putString("pass2", server.arg("pass2"));
+  
+  if(server.hasArg("admin_user")) preferences.putString("admin_user", server.arg("admin_user"));
+  if(server.hasArg("admin_pass")) preferences.putString("admin_pass", server.arg("admin_pass"));
+  if(server.hasArg("read_user")) preferences.putString("read_user", server.arg("read_user"));
+  if(server.hasArg("read_pass")) preferences.putString("read_pass", server.arg("read_pass"));
+
+  if(server.hasArg("mqtt_ip")) preferences.putString("mqtt_ip", server.arg("mqtt_ip"));
+  if(server.hasArg("mqtt_port")) preferences.putInt("mqtt_port", server.arg("mqtt_port").toInt());
+  if(server.hasArg("mqtt_user")) preferences.putString("mqtt_user", server.arg("mqtt_user"));
+  if(server.hasArg("mqtt_pass")) preferences.putString("mqtt_pass", server.arg("mqtt_pass"));
+  preferences.end();
+  
+  server.send(200, "text/html", "<html><body><h2>Saved! Rebooting...</h2></body></html>");
+  delay(2000);
+  ESP.restart();
+}
+
+void handleSettingsSave() {
+  // Only Admin can save settings
+  if (checkAuth() != 1) {
+    server.send(403, "text/plain", "Forbidden - Admin access required.");
+    return;
+  }
+  
+  handleSetupSave(); // Use same logic to save to NVS and reboot
+}
+
+void startSetupPortal() {
+  isSetupMode = true;
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP("AirQuality_Setup", "password123");
+  Serial.println("AP Started: AirQuality_Setup / password123");
+  Serial.print("Web Portal IP: ");
+  Serial.println(WiFi.softAPIP());
+  
+  u8x8.clear();
+  u8x8.setCursor(0,0);
+  u8x8.println("Setup Connect:");
+  u8x8.println("AirQuality_Setup");
+  u8x8.println("password123");
+  u8x8.println(WiFi.softAPIP().toString());
+  
+  server.on("/", HTTP_GET, handleSetupRoot);
+  server.on("/save", HTTP_POST, handleSetupSave);
+  server.begin();
+}
 
 void setup() {
   Serial.begin(115200);
@@ -75,47 +188,59 @@ void setup() {
 
   // 1. Initialize Display First (to show connection status)
   Wire.begin();
-  setupDisplay();
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("Booting...");
-  display.println("Starting WiFiSetup");
-  display.display();
+  u8x8.begin();
+  u8x8.setFlipMode(1);
+  u8x8.setFont(u8x8_font_chroma48medium8_r);
+  u8x8.clear();
+  u8x8.setCursor(0, 0);
+  u8x8.println("Booting...");
+  u8x8.println("Starting WiFiSetup");
 
-  // 2. Initialize WiFi via WiFiManager
-  WiFiManager wm;
-  // wm.resetSettings(); // Uncomment to wipe saved WiFi credentials for testing
-  bool res =
-      wm.autoConnect("AirQuality_Setup", "password123"); // AP Name and Password
-  if (!res) {
-    Serial.println("Failed to connect to WiFi and hit timeout");
-    display.println("WiFi Failed. Restarting.");
-    display.display();
-    delay(3000);
-    ESP.restart();
+  // 2. Load Settings & Initialize WiFi
+  loadSettings();
+  
+  WiFi.mode(WIFI_STA);
+  Serial.println("Connecting to WiFi using WiFiMulti...");
+  
+  // Try to connect up to 15 seconds
+  int attempts = 0;
+  while (wifiMulti.run() != WL_CONNECTED && attempts < 15) {
+    delay(1000);
+    Serial.print(".");
+    attempts++;
   }
 
-  Serial.println("Connected to WiFi!");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP());
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nConnected to WiFi!");
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("\nFailed to connect to WiFi! Starting Setup AP.");
+    startSetupPortal();
+    return; // Don't proceed to sensors/MQTT in setup mode
+  }
 
   // 3. Initialize Sensors
   setupSensors();
 
-  // 4. Initialize MQTT
-  mqttClient.setServer(mqtt_server, mqtt_port);
-
-  // 5. Initialize Web Server
+  if (mqtt_server.length() > 0) {
+    mqttClient.setServer(mqtt_server.c_str(), mqtt_port);
+  } // 5. Initialize Web Server
   setupWebServer();
   server.begin();
   Serial.println("HTTP Server Started");
 }
 
 void reconnectMQTT() {
-  if (mqttClient.connected())
+  if (mqttClient.connected() || mqtt_server.length() == 0)
     return;
-  Serial.print("Attempting MQTT connection...");
-  if (mqttClient.connect("ESP32_C6_AirQuality", mqtt_user, mqtt_password)) {
+  Serial.print("Attempting MQTT connection to ");
+  Serial.print(mqtt_server);
+  Serial.print("...");
+  
+  mqttClient.setServer(mqtt_server.c_str(), mqtt_port);
+  
+  if (mqttClient.connect("ESP32_C6_AirQuality", mqtt_user.c_str(), mqtt_password.c_str())) {
     Serial.println("connected");
 
     // Publish Home Assistant auto-discovery payloads
@@ -149,7 +274,7 @@ void reconnectMQTT() {
          "temperature", "{{ value_json.spa_temp | round(1) }}"}};
 
     for (int i = 0; i < 7; i++) {
-      StaticJsonDocument<512> doc;
+      JsonDocument doc;
       doc["name"] = String("AirQuality ") + sensors[i].name;
       doc["state_topic"] = state_topic;
       if (strlen(sensors[i].unit) > 0)
@@ -158,8 +283,8 @@ void reconnectMQTT() {
       doc["value_template"] = sensors[i].val_tpl;
       doc["unique_id"] = String("airquality_c6_") + sensors[i].id;
 
-      JsonObject device = doc.createNestedObject("device");
-      JsonArray identifiers = device.createNestedArray("identifiers");
+      JsonObject device = doc["device"].to<JsonObject>();
+      JsonArray identifiers = device["identifiers"].to<JsonArray>();
       identifiers.add("airquality_c6_device");
       device["name"] = "ESP32-C6 Air Quality Monitor";
       device["model"] = "XIAO ESP32-C6 Expansion";
@@ -178,6 +303,15 @@ void reconnectMQTT() {
 }
 
 void loop() {
+  server.handleClient();
+  if (isSetupMode) {
+    return; // Stay in AP mode and do nothing else
+  }
+
+  if (wifiMulti.run() != WL_CONNECTED) {
+    // Attempting auto reconnect via wifiMulti
+  }
+
   if (!mqttClient.connected()) {
     static unsigned long lastReconnectAttempt = 0;
     if (millis() - lastReconnectAttempt > 5000) {
@@ -195,7 +329,7 @@ void loop() {
     updateOLED();
 
     if (mqttClient.connected()) {
-      StaticJsonDocument<200> doc;
+      JsonDocument doc;
       doc["temperature"] = tempC;
       doc["humidity"] = humidity;
       doc["pm2_5"] = pm25;
@@ -212,16 +346,7 @@ void loop() {
 
 // --- Helper Functions ---
 
-void setupDisplay() {
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x64
-    Serial.println(F("SSD1306 allocation failed"));
-    for (;;)
-      ; // Don't proceed, loop forever
-  }
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.clearDisplay();
-}
+
 
 void setupSensors() {
   Serial.println("Initializing Sensors...");
@@ -306,57 +431,48 @@ void readSensors() {
 }
 
 void updateOLED() {
-  display.clearDisplay();
-  display.setCursor(0, 0);
+  u8x8.clear();
+  u8x8.setCursor(0, 0);
 
-  const int lineHeight = 8;
-  int currentY = 0;
-
-  display.println("IP:" + WiFi.localIP().toString());
-  currentY += lineHeight;
-
-  String lines[] = {
-      "Temp: " + String(tempC, 1) + " C", "Hum: " + String(humidity, 1) + " %",
-      "PM2.5: " + String(pm25) + " ug/m3", "VOC: " + String(srawVoc),
-      "Pres: " + String(pressure_hPa, 1) + "hPa"};
-
-  int numLines = sizeof(lines) / sizeof(lines[0]);
-
-  for (int i = 0; i < numLines; i++) {
-    if ((currentY + lineHeight) <= SCREEN_HEIGHT) {
-      display.println(lines[i]);
-      currentY += lineHeight;
-    } else {
-      display.fillRect(0, SCREEN_HEIGHT - lineHeight, SCREEN_WIDTH, lineHeight,
-                       SSD1306_BLACK);
-      display.setCursor(0, SCREEN_HEIGHT - lineHeight);
-      display.println("WARN: Data Overflow");
-      break;
-    }
-  }
-  display.display();
+  u8x8.println(WiFi.localIP().toString());
+  
+  u8x8.print("T:");u8x8.print(tempC, 1);u8x8.print("C H:");u8x8.print(humidity, 0);u8x8.println("%");
+  u8x8.print("PM2.5:");u8x8.print(pm25);u8x8.println(" ug/m3");
+  u8x8.print("VOC:");u8x8.println(srawVoc);
+  u8x8.print("Prs:");u8x8.print(pressure_hPa, 1);u8x8.println("hPa");
 }
 
 void setupWebServer() {
   server.on("/", HTTP_GET, handleRoot);
   server.on("/api/data", HTTP_GET, handleApiData);
+  server.on("/settings/save", HTTP_POST, handleSettingsSave);
 }
 
-bool checkAuth() {
-  // Define credentials inside - in a real app, store these securely or make
-  // configurable
-  const char *www_username = "admin";
-  const char *www_password = "password123";
-  if (!server.authenticate(www_username, www_password)) {
-    server.requestAuthentication();
-    return false;
+int checkAuth() {
+  preferences.begin("airquality", true);
+  String admin_user = preferences.getString("admin_user", "admin");
+  String admin_pass = preferences.getString("admin_pass", "password123");
+  String read_user = preferences.getString("read_user", "user");
+  String read_pass = preferences.getString("read_pass", "read123");
+  preferences.end();
+
+  if (server.authenticate(admin_user.c_str(), admin_pass.c_str())) {
+    return 1; // Admin
   }
-  return true;
+  if (server.authenticate(read_user.c_str(), read_pass.c_str())) {
+    return 2; // Read-Only
+  }
+
+  server.requestAuthentication();
+  return 0; // Unauthorized
 }
 
 void handleRoot() {
-  if (!checkAuth())
-    return;
+  int role = checkAuth();
+  if (role == 0)
+    return; // 0 is unauthorized
+
+  bool isAdmin = (role == 1);
 
   String html = R"rawliteral(
 <!DOCTYPE html>
@@ -371,13 +487,16 @@ void handleRoot() {
     --panel: #16213e;
     --text: #e94560;
     --highlight: #0f3460;
+    --green: #4ade80;
+    --yellow: #facc15;
+    --red: #f87171;
   }
   body {
     background: var(--bg); color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0; padding: 20px;
   }
   .container { max-width: 800px; margin: auto; }
-  .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+  .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
   .tab { 
     padding: 10px 20px; background: var(--panel); cursor: pointer;
     border-radius: 5px; transition: 0.3s;
@@ -390,38 +509,127 @@ void handleRoot() {
     background: #0f3460; padding: 15px; border-radius: 8px; text-align: center;
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
   }
-  .card h3 { margin: 0 0 10px 0; color: #a2a2bd; font-size: 14px; }
+  .card h3 { margin: 0 0 5px 0; color: #a2a2bd; font-size: 14px; }
   .card .val { font-size: 24px; font-weight: bold; color: var(--text); }
+  .card .range { font-size: 11px; color: #888; margin-top: 5px; }
+  .good { color: var(--green) !important; text-shadow: 0 0 5px rgba(74,222,128,0.5); }
+  .warn { color: var(--yellow) !important; text-shadow: 0 0 5px rgba(250,204,21,0.5); }
+  .danger { color: var(--red) !important; text-shadow: 0 0 5px rgba(248,113,113,0.5); }
   input, button { padding: 10px; margin-top: 10px; border-radius: 5px; border: none; }
-  button { background: var(--text); color: white; cursor: pointer; }
+  button { background: var(--text); color: white; cursor: pointer; transition: 0.2s; }
+  button:hover { opacity: 0.8; }
+  .info-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .info-table th, .info-table td { padding: 10px; border-bottom: 1px solid #333; text-align: left; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h2>Air Quality Monitor</h2>
+  <h2>Air Quality Monitor <span style="font-size:12px;color:#aaa;">()rawliteral";
+  
+  html += isAdmin ? "Admin" : "Read-Only Viewer";
+  html += R"rawliteral()</span></h2>
+  
   <div class="tabs">
     <div class="tab active" onclick="showTab('dash')">Dashboard</div>
+    <div class="tab" onclick="showTab('info')">Detailed Info</div>
+)rawliteral";
+
+  if (isAdmin) {
+    html += R"rawliteral(
     <div class="tab" onclick="showTab('settings')">Settings</div>
+    <div class="tab" onclick="showTab('calib')">Calibration</div>
+    )rawliteral";
+  }
+
+  html += R"rawliteral(
   </div>
 
   <div id="dash" class="panel active">
     <div class="grid">
-      <div class="card"><h3>Temperature (DHT)</h3><div class="val" id="t-dht">-- &deg;C</div></div>
-      <div class="card"><h3>Humidity (DHT)</h3><div class="val" id="h-dht">-- %</div></div>
-      <div class="card"><h3>Temperature (SPA)</h3><div class="val" id="t-spa">-- &deg;C</div></div>
-      <div class="card"><h3>Pressure</h3><div class="val" id="p-spa">-- hPa</div></div>
-      <div class="card"><h3>PM 2.5</h3><div class="val" id="v-pm">-- &micro;g/m&sup3;</div></div>
-      <div class="card"><h3>VOC (Raw)</h3><div class="val" id="v-voc">--</div></div>
-      <div class="card"><h3>NOx (Raw)</h3><div class="val" id="v-nox">--</div></div>
+      <div class="card">
+        <h3>Temperature</h3>
+        <div class="val" id="t-dht">-- &deg;C</div>
+        <div class="range">Ideal: 18-24 &deg;C</div>
+      </div>
+      <div class="card">
+        <h3>Humidity</h3>
+        <div class="val" id="h-dht">-- %</div>
+        <div class="range">Ideal: 30-60 %</div>
+      </div>
+      <div class="card">
+        <h3>PM 2.5</h3>
+        <div class="val" id="v-pm">-- &micro;g/m&sup3;</div>
+        <div class="range">Good: &lt; 12 | Warn: 12-35</div>
+      </div>
+      <div class="card">
+        <h3>VOC (Raw)</h3>
+        <div class="val" id="v-voc">--</div>
+        <div class="range">Baseline ~ 100-300</div>
+      </div>
+      <div class="card">
+        <h3>NOx (Raw)</h3>
+        <div class="val" id="v-nox">--</div>
+        <div class="range">Lower is better</div>
+      </div>
     </div>
   </div>
 
-  <div id="settings" class="panel">
-    <h3>MQTT Configuration</h3>
-    <p>Update broker details securely (Coming Soon).</p>
-    <input type="text" placeholder="Broker IP"><br>
-    <button>Save configuration</button>
+  <div id="info" class="panel">
+    <h3>Data Ranges & Details</h3>
+    <table class="info-table">
+      <tr><th>Sensor</th><th>Good (Green)</th><th>Caution (Yellow)</th><th>Bad (Red)</th></tr>
+      <tr><td>Temperature</td><td>18 - 26 °C</td><td>10-18 °C or 26-30 °C</td><td>< 10 or > 30 °C</td></tr>
+      <tr><td>Humidity</td><td>30 - 60 %</td><td>20-30 % or 60-70 %</td><td>< 20 or > 70 %</td></tr>
+      <tr><td>PM 2.5</td><td>0 - 12 µg/m³</td><td>12 - 35 µg/m³</td><td>> 35 µg/m³</td></tr>
+    </table>
+    <p style="font-size:12px; color:#aaa; margin-top:20px;">* VOC and NOx are raw ticks from the SGP41. They require a baseline calibration. Higher numbers indicates heavier concentration.</p>
   </div>
+)rawliteral";
+
+  if (isAdmin) {
+    html += R"rawliteral(
+  <div id="settings" class="panel">
+    <h3>System Settings</h3>
+    <p>Admin Configuration controls. Warning: saving will reboot the device.</p>
+    <form action='/settings/save' method='POST'>
+      <div style="margin-bottom:15px">
+        <h4>WiFi Network 1</h4>
+        <input type='text' name='ssid1' placeholder='SSID 1'><br>
+        <input type='password' name='pass1' placeholder='Password 1'>
+      </div>
+      <div style="margin-bottom:15px">
+        <h4>WiFi Network 2 (Optional Fallback)</h4>
+        <input type='text' name='ssid2' placeholder='SSID 2'><br>
+        <input type='password' name='pass2' placeholder='Password 2'>
+      </div>
+      <div style="margin-bottom:15px">
+        <h4>WebUI Credentials</h4>
+        <input type='text' name='admin_user' placeholder='Admin Username (default: admin)'><br>
+        <input type='password' name='admin_pass' placeholder='Admin Password (default: password123)'><br>
+        <input type='text' name='read_user' placeholder='Read-Only Username (default: user)'><br>
+        <input type='password' name='read_pass' placeholder='Read-Only Password (default: read123)'>
+      </div>
+      <div style="margin-bottom:15px">
+        <h4>MQTT Broker</h4>
+        <input type='text' name='mqtt_ip' placeholder='Broker IP (e.g. 192.168.1.100)'><br>
+        <input type='number' name='mqtt_port' placeholder='Port (1883)' value='1883'><br>
+        <input type='text' name='mqtt_user' placeholder='MQTT Username'><br>
+        <input type='password' name='mqtt_pass' placeholder='MQTT Password'>
+      </div>
+      <button type="submit">Save and Reboot</button>
+    </form>
+  </div>
+
+  <div id="calib" class="panel">
+    <h3>Sensor Calibration</h3>
+    <p>Trigger internal sensor baselines and tests.</p>
+    <button onclick="runCalib('sgp41')">Reset SGP41 Baseline</button>
+    <button onclick="runCalib('hm3301')">Trigger HM3301 Cleaning</button>
+  </div>
+    )rawliteral";
+  }
+
+  html += R"rawliteral(
 </div>
 
 <script>
@@ -432,21 +640,57 @@ void handleRoot() {
     event.target.classList.add('active');
   }
 
+  function applyColor(elementId, value, goodMax, warnMax, inverted = false) {
+    const el = document.getElementById(elementId);
+    el.className = 'val'; // reset
+    if (!inverted) {
+      if (value <= goodMax) el.classList.add('good');
+      else if (value <= warnMax) el.classList.add('warn');
+      else el.classList.add('danger');
+    } else {
+      // For things like humidity where too low is also bad (ideal 30-60)
+      if (value >= 30 && value <= 60) el.classList.add('good');
+      else if (value >= 20 && value <= 70) el.classList.add('warn');
+      else el.classList.add('danger');
+    }
+  }
+
+  function applyColorTemp(elementId, temp) {
+     const el = document.getElementById(elementId);
+     el.className = 'val';
+     if (temp >= 18 && temp <= 26) el.classList.add('good');
+     else if ((temp >= 10 && temp < 18) || (temp > 26 && temp <= 30)) el.classList.add('warn');
+     else el.classList.add('danger');
+  }
+
   async function updateData() {
     try {
       const res = await fetch('/api/data');
-      if (res.status === 401) return; // Auth required, ignore fetch if kicked out
+      if (res.status === 401) return; 
       const data = await res.json();
+      
       document.getElementById('t-dht').innerText = data.temperature.toFixed(1) + ' °C';
+      applyColorTemp('t-dht', data.temperature);
+
       document.getElementById('h-dht').innerText = data.humidity.toFixed(1) + ' %';
-      document.getElementById('t-spa').innerText = data.spa_temp.toFixed(1) + ' °C';
-      document.getElementById('p-spa').innerText = data.pressure.toFixed(1) + ' hPa';
+      applyColor('h-dht', data.humidity, 0, 0, true);
+
       document.getElementById('v-pm').innerText = data.pm2_5 + ' µg/m³';
+      applyColor('v-pm', data.pm2_5, 12, 35);
+
       document.getElementById('v-voc').innerText = data.voc_raw;
+      applyColor('v-voc', data.voc_raw, 250, 400); // Rough raw estimates
+
       document.getElementById('v-nox').innerText = data.nox_raw;
+      applyColor('v-nox', data.nox_raw, 250, 400); 
+
     } catch(e) { console.error('Fetch error:', e); }
   }
   
+  async function runCalib(sensor) {
+    alert("Sent calibration command for: " + sensor + " (Mock Implementation)");
+  }
+
   setInterval(updateData, 5000);
   updateData();
 </script>
@@ -458,10 +702,10 @@ void handleRoot() {
 }
 
 void handleApiData() {
-  if (!checkAuth())
+  if (checkAuth() == 0)
     return; // Secure API endpoint as well
 
-  StaticJsonDocument<200> doc;
+  JsonDocument doc;
   doc["temperature"] = tempC;
   doc["humidity"] = humidity;
   doc["pm2_5"] = pm25;

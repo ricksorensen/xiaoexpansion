@@ -42,7 +42,11 @@ PCF8563 pcf;
 #define LOOP_DELAY 1000        // ms to delay at end of loop
 #define BUTTON_INTERRUPT 1     // 0 to use polling, 1 to user interrupts
 #define BUTTON_INTERRUPT_MODE FALLING
+#if defined(ARDUINO_XIAO_ESP32C6)
+#define BUTTON_PIN D1
+#else
 #define BUTTON_PIN A1  // D1 not defined for XIAO_M0
+#endif
 #if defined(ARDUINO_XIAO_ESP32C3) || defined(ARDUINO_XIAO_ESP32C6)
 #define LED_PIN (-1)    // undefined
 #elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
@@ -51,10 +55,17 @@ PCF8563 pcf;
 #define LED_PIN    LED_BUILTIN
 #endif
 
+#if defined(ARDUINO_XIAO_ESP32C6)
+#define BUZZER_PIN D3   
+#define DAC_PIN    A0   // only on SAMD
+#define DAC_RESOLUTION 10  // only SAMD21
+#define ADC_PIN    D2
+#else
 #define BUZZER_PIN A3   //D3 didn't work for SAMD
 #define DAC_PIN    A0   // only on SAMD
 #define DAC_RESOLUTION 10  // only SAMD21
 #define ADC_PIN    A2
+#endif
 // default ADC_RESOLUTION=12 for XIAO_M0
 //                        12 for NRF mbed and NRF adafruit core
 //                        12 for rp2040
@@ -72,8 +83,8 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs wi
 #elif defined(ARDUINO_SEEED_XIAO_RP2040)
 U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
 #elif defined(ARDUINO_XIAO_ESP32C3) || defined(ARDUINO_XIAO_ESP32C6)
-//0U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
+// For ESP32-C3 and ESP32-C6, specifying the clock and data pins helps resolve I2C initialisation issues
+U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE, /* clock=*/ SCL, /* data=*/ SDA);
 #else
 // use default I2C
 U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
