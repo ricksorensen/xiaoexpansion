@@ -69,6 +69,6 @@ End of table
  + pico_future: works led,buzzer/sound, display, pfc clock, adc, (no dac)
  + seeed_xiao_esp32c3: works (no led),buzzer/sound, display, pfc clock, adc, (no dac)
  + seeed_xiao_esp32c6: works (RGB NeoPixel on GPIO 8), buzzer/sound, display, pfc clock, adc (no dac)
- + airquality_c6: Dedicated air quality monitor on ESP32-C6 with WebUI and Home Assistant Auto-Discovery using TCA9548A multiplexer.
+ + airquality_c6: Dedicated air quality monitor on ESP32-C6 with NVS Custom Setup AP, Role-Based Custom WebUI, and Home Assistant Auto-Discovery using TCA9548A multiplexer.
  + sense_future: works  led,buzzer/sound, display, pfc clock, adc,(no dac) 
  +  sense_future_adafruit: works  led,buzzer/sound, display, pfc clock, adc,(no dac)

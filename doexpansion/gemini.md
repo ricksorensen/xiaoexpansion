@@ -77,7 +77,7 @@ Code uses `#ifdef` branching based on PlatformIO-injected defines:
 - **ESP32-C6 Air Quality Monitor** (`airquality_c6` env)
   - Uses `TCA9548A` multiplexer for I2C (Pa.HUB)
   - Sensors: `SGP41` (Voc/NOx), `SPA06-003` (Pressure/Temp), `HM3301` (PM2.5), `DHT11`
-  - Features: WiFiManager, WebUI, Home Assistant MQTT Discovery
+  - Features: Custom NVS Setup AP (`AirQuality_Setup`), Role-Based WebUI (Admin/Read-Only), Green/Yellow/Red Dashboard Status, Home Assistant MQTT Discovery
   - Due to `esptool` argument changes on C6, standard `platformio-build.py` had to be modified to remove `--flash-mode` / `--flash-freq` / `--flash-size` arguments.
 
 ## Notes for AI Assistants
