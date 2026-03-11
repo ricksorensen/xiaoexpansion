@@ -101,7 +101,7 @@ keepgoing = True
 try:
     while keepgoing:
         gc.collect()
-        print(gc.mem_free())
+        # print(gc.mem_free())
         if (cin := qin.kbin()) is not None:
             vline = qin.kbLine(cin)
             vin = getVoltage(vline, 1023)
