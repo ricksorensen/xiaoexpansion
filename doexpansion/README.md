@@ -13,13 +13,14 @@ Known `platformio` build environments (see `platformio.ini` for details):
 - `pico` for the Raspberry Pi PICO (notionally the Seeed SAMD XIAO RP2040) with mbed, standard arduino tools
 needs significant adaptation for XIAO RP2040 to get I2 working
 - `seeed_xiao_esp32c3` for the Seeed XIAO ESP32C3
-- `seeed_xiao_esp32c3_v5`for the Seeed XIAO ESP32C3 using
-
+- `seeed_xiao_esp32c3_v5`for the Seeed XIAO ESP32C3 using 
     `framework=espidf` to try and use IDF v5.2.x.  20240811 not working yet. 
-- `pico_future` for the Seeed XIAO RP2040 using the `earlephilhower` toolset
+- `seeed_xiao_rp2040` for the Seeed XIAO RP2040 using the `earlephilhower` toolset
 preferred option for XIAO 2040
+- `seeed_xiao_rp2350` for the Seeed XIAO RP2350 using the Seeed github 
+- `seeed_xiao_rp2350x` for the Seeed XIAO RP2350 using the `earlephilhower` toolset
 - `sense_future` for the Seeed XIAO NRF52840 Sense- with mbed
-- `sense_future_adafruit` for the Seeed XIAO NRF52840 Sense, bare metal
+- `sense_future_adafruit` for the Seeed XIAO NRF52840 Sense, bare metal.  Note the Serial1 does not work with this.
 
 Plus some others for the curious.
 
@@ -33,6 +34,9 @@ Implementation notes:
    * `ARDUINO_SEEED_XIAO_RP2040`           rp2040 earlephilhower tools
    * `ARDUINO_Seeed_XIAO_nRF52840_Sense`  arduino IDE, platformio adafruitnrf
    * `SEEED_XIAO_NRF52840_SENSE`           platformio, mbed nrf
+   
+   See `xiaoxxxx.h` for pin and setup functions for each board.
+   
 3. Since currently (20230228) GPS/Network time is not being used, the PCF8563 time is arbitrarily set. 
 4. Arduino libraries used are
 
@@ -40,6 +44,7 @@ Implementation notes:
 lib_deps =
         olikraus/U8g2
         https://github.com/Bill2462/PCF8563-Arduino-Library
+		mikalhart/TinyGPSPlus@^1.0.3
 ```
 5. GPS is not currently used
 
@@ -61,9 +66,43 @@ Pins using arduino/platformio naming.
 End of table
 
 
- + seeed_xiao: works  led,buzzer/sound, display, pfc clock, adc, dac 
+The `doit` command will try to compile all the viable known xiao environments (with a cleanall at start):
+seeed_xiao
+seeed_xiao_esp32c3
+seeed_xiao_esp32s3
+pico                      FAIL
+seeed_xiao_rp2040
+seeed_xiao_rp2350
+seeed_xiao_rp2350x
+sense_future
+sense_future_adafruit
+
+while the `doit.gps` command will try to compile all the viable known xiao & gps environments:
+seeed_xiao_gps
+seeed_xiao_esp32c3_gps
+seeed_xiao_esp32s3_gps
+pico
+seeed_xiao_rp2040_gps
+seeed_xiao_rp2350_gps
+seeed_xiao_rp2350x_gps
+sense_future_gps
+
+
+
+ + seeed_xiao: works  led,buzzer/sound, display, pfc clock, adc, dac, gps
  + pico: led, buzzer works but is running all the time, display not updating  I2C problem.  No output on usb/serial
  + pico_future: works led,buzzer/sound, display, pfc clock, adc, (no dac)
- + seeed_xiao_esp32c3: works (no led),buzzer/sound, display, pfc clock, adc, (no dac)
+   red led
+ + seeed_xiao_esp32c3: works (no led),buzzer/sound, display, pfc clock, adc, (no dac), gps
+ + seeed_xiao_esp32s3: LED_PIN does not work,buzzer/sound, display, pfc clock, adc, (no dac), gps
  + sense_future: works  led,buzzer/sound, display, pfc clock, adc,(no dac) 
 +  sense_future_adafruit: works  led,buzzer/sound, display, pfc clock, adc,(no dac) 
+
++ seeed_xiao_rp2350x_gps: led, buzzer/sound, no display, ...., gps
+
+lost bootloader
+
++ seeed_xiao_rp2350rv_gps: led, buzzer/sound, no display, ...., gps
+
+lost bootloader  
+ + sense_future_gps: works no  led,buzzer/sound, display, pfc clock, adc,(no dac) 
