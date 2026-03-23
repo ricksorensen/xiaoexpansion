@@ -21,9 +21,13 @@
 #include <PCF8563.h>
 PCF8563 pcf;
 #include <Wire.h>
-#if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
-#include <checkregs.h>
-#endif
+
+#include "xiaosamd.h"
+#include "xiaorp2040.h"
+#include "xiaoesp32c3.h"
+#include "xiaoesp32s3.h"
+#include "xiaonrf52.h"
+
 /** Interrupt states:
     M0, RP2040, NRF52840
     // LOW = 0x00 for LOW level
@@ -39,48 +43,14 @@ PCF8563 pcf;
     // RISING = 0x01
     // FALLING = 0x02
 **/
+#if not defined(GPSSerial)
 #define GPSSerial Serial1
+#endif
 TinyGPSPlus GPS;
 
 #define LOOP_DELAY 1000        // ms to delay at end of loop
 #define BUTTON_INTERRUPT 1     // 0 to use polling, 1 to user interrupts
 #define BUTTON_INTERRUPT_MODE FALLING
-#define BUTTON_PIN A1  // D1 not defined for XIAO_M0
-#if defined(ARDUINO_XIAO_ESP32C3)
-#define LED_PIN (-1)    // undefined
-#elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
-#define LED_PIN (17)  //xiao pin    ... avoid conflict with PICO W 
-#else
-#define LED_PIN    LED_BUILTIN
-#endif
-
-#define BUZZER_PIN A3   //D3 didn't work for SAMD
-#define DAC_PIN    A0   // only on SAMD
-#define DAC_RESOLUTION 10  // only SAMD21
-#define ADC_PIN    A2
-// default ADC_RESOLUTION=12 for XIAO_M0
-//                        12 for NRF mbed and NRF adafruit core
-//                        12 for rp2040
-//                        12 for ESP32C3 ... not change able
-#if defined(ARDUINO_XIAO_ESP32C3)
-#define MYADCRESOLUTION 12
-#else
-#define MYADCRESOLUTION ADC_RESOLUTION
-#endif
-
-#if defined(ARDUINO_RASPBERRY_PI_PICO) 
-// use XIAO pinout
-//U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/*clock=*/7u, /* data=*/ 6u, /* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-#elif defined(ARDUINO_SEEED_XIAO_RP2040)
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-#elif defined(ARDUINO_XIAO_ESP32C3)
-//0U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-#else
-// use default I2C
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-#endif
 
 
 static bool buzzOn = false;
@@ -102,49 +72,49 @@ static void buttonpush(void) {
 #endif
 //static char gpshour, gpsminute, gpssecond;
 
-static void getgps(void) {
-  //Serial.print("Serial Avail: ");Serial.println(Serial1.available());
-  while (Serial1.available() > 0) {
-    char c = Serial1.read();//Serial.print(c);
-    if (GPS.encode(c)) {
-      //Serial.println();
-      //gpshour=GPS.time.hour();
-      //gpsminute=GPS.time.minute();
-      //gpssecond=GPS.time.second();
-      //break;
-    }
+static inline void clearSerial(void) {
+  while (GPSSerial.available() > 0) {
+    (void) GPSSerial.read();
   }
+  while (GPSSerial.available() == 0) {
+  }
+}
+
+static void getgps(unsigned long mswait) {
+  //clearSerial();
+  //Serial.print("Serial Avail: ");Serial.println(GPSSerial.available());
+  unsigned long start = millis();
+  do {
+    while (GPSSerial.available() > 0) {
+      char c=GPSSerial.read();Serial.write(c);
+      GPS.encode(c);
+    }
+  } while (millis() - start < mswait);
+  Serial.println();
+  Serial.print("  GPS Char Processed: ");Serial.print(GPS.charsProcessed());
+  Serial.print("sentwithFix: ");Serial.println(GPS.sentencesWithFix());
 }
 
 
 //char tstr[8];
 static void dumpinfo(void) {
-#if defined(ARDUINO_SEEED_XIAO_M0)
-  Serial.println("XIAO_M0");
-#elif defined(ARDUINO_XIAO_ESP32C3)
-  Serial.println("XIAO_ESP32C3");
-#elif defined(ARDUINO_RASPBERRY_PI_PICO)
-  Serial.println("PICO");
-#elif defined(ARDUINO_SEEED_XIAO_RP2040)
-  Serial.println("XIAO_RP2040");
-#elif defined(SEEED_XIAO_NRF52840_SENSE)
-  Serial.println("XIAO_NRF52840_SENSE (mbed)");
-#elif defined(ARDUINO_Seeed_XIAO_nRF52840_Sense)
-  Serial.println("ARDUINO_Seeed_XIAO_nRF52840_Sense adafruit core");
-#else
-  Serial.println("Unknown board");
-#endif
+
   //tstr[0] = 0;
   // assume CST ... %24 for 0-23 hours
-  //while (Serial1.available() > 0) {
-  //  Serial1.read();
+  //while (GPSSerial.available() > 0) {
+  //  GPSSerial.read();
   //}
-  //while (Serial1.available() == 0) {
+  //while (GPSSerial.available() == 0) {
   //}
   //snprintf(tstr,8,"%02d:%02d",gpshour, gpsminute);
   //Serial.print("save gps Time ");
   //Serial.println(tstr);
   Serial.print(F("GPS  "));
+  if (GPS.location.isValid()) {
+    Serial.println(" Position Valid");
+  } else {
+    Serial.println(" Position not Valid");
+  }    
   if (GPS.date.isValid()) {
     Serial.print(" Date Valid: ");
     Serial.print(GPS.date.month());
@@ -152,6 +122,8 @@ static void dumpinfo(void) {
     Serial.print(GPS.date.day());
     Serial.print(F("/"));
     Serial.print(GPS.date.year());
+  } else {
+    Serial.print(" No valid GPS Date");
   }
   Serial.print(" ");
   if (GPS.time.isValid()) {
@@ -175,20 +147,15 @@ static void dumpinfo(void) {
   Serial.print("FALLING=");Serial.println(FALLING);
   Serial.print("LED Pin: ");Serial.println(LED_PIN);
   Serial.print("Buzzer Pin: ");Serial.println(BUZZER_PIN);
-#if defined (ARDUINO_SEEED_XIAO_M0)
-  Serial.print("DAC Pin: ");Serial.print(DAC_PIN);
-  Serial.print("  Resolution: ");Serial.println(DAC_RESOLUTION);
-#else
-  Serial.println("No DAC");
-#endif
   Serial.print("ADC Pin: ");Serial.println(ADC_PIN);
   Serial.print("  Resolution: ");Serial.println(MYADCRESOLUTION);
 }
 
 void setup() {
-  Serial1.begin(9600);
+  // GPSSerial.begin(9600);
   Serial.begin(115200);
   while (!Serial) ;        // ESP32C3 Serial seems up if powered from USB with no terminal pgm connected
+  mcusetup();
   delay(5000);
   Serial.println("setup: Starting up");
 #if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
@@ -198,9 +165,7 @@ void setup() {
   }
   dacstate();
 #endif  
-#if not defined(ARDUINO_XIAO_ESP32C3)
-  pinMode(LED_PIN, OUTPUT);
-#endif
+
 #if defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
   pinMode(25, OUTPUT);digitalWrite(25, 1);  // turn off all
   pinMode(16, OUTPUT);digitalWrite(16, 1);
@@ -218,12 +183,6 @@ void setup() {
   attachInterrupt(BUTTON_PIN, buttonpush, FALLING);
 #else
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonpush, FALLING);
-#endif
-#endif
-#if not defined(ARDUINO_XIAO_ESP32C3)
-  analogReadResolution(MYADCRESOLUTION);   // should be 12
-#if defined(ARDUINO_SEEED_XIAO_M0)
-  analogWriteResolution(DAC_RESOLUTION);  // should be 10
 #endif
 #endif
   uint32_t defclk = u8x8.getBusClock();
@@ -261,7 +220,7 @@ void setup() {
  
 void loop() {
   int newVoltage = -1;
-  getgps();
+  getgps(LOOP_DELAY);
   if (Serial.available()>0) {
     newVoltage=Serial.parseInt();
     // flush input
@@ -328,7 +287,7 @@ void loop() {
   }
   int adclevel = analogRead(ADC_PIN);
   u8x8.clearLine(6);
-  u8x8.setCursor(0,4);
+  u8x8.setCursor(0,6);
   u8x8.print("  ANLG: ");u8x8.print(adclevel);
 #if BUTTON_INTERRUPT
   if (buttonState) {
@@ -346,5 +305,5 @@ void loop() {
   if (buzzOn) {
     doBuzzer(BUZZER_PIN);
   }
-  delay(LOOP_DELAY);
+  // delay(LOOP_DELAY);
 }

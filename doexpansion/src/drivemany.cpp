@@ -14,15 +14,21 @@
 #if !defined(SAMD_REG_DUMP)
 #define SAMD_REG_DUMP 0
 #endif
+
 #include <Arduino.h>
 #include "playsong.h"
 #include <U8x8lib.h>
 #include <PCF8563.h>
 PCF8563 pcf;
 #include <Wire.h>
-#if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
-#include <checkregs.h>
-#endif
+
+#include "xiaosamd.h"
+#include "xiaorp2040.h"
+#include "xiaorp2350.h"
+#include "xiaoesp32c3.h"
+#include "xiaoesp32s3.h"
+#include "xiaonrf52.h"
+
 /** Interrupt states:
     M0, RP2040, NRF52840
     // LOW = 0x00 for LOW level
@@ -42,42 +48,6 @@ PCF8563 pcf;
 #define LOOP_DELAY 1000        // ms to delay at end of loop
 #define BUTTON_INTERRUPT 1     // 0 to use polling, 1 to user interrupts
 #define BUTTON_INTERRUPT_MODE FALLING
-#define BUTTON_PIN A1  // D1 not defined for XIAO_M0
-#if defined(ARDUINO_XIAO_ESP32C3)
-#define LED_PIN (-1)    // undefined
-#elif defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
-#define LED_PIN (17)  //xiao pin    ... avoid conflict with PICO W 
-#else
-#define LED_PIN    LED_BUILTIN
-#endif
-
-#define BUZZER_PIN A3   //D3 didn't work for SAMD
-#define DAC_PIN    A0   // only on SAMD
-#define DAC_RESOLUTION 10  // only SAMD21
-#define ADC_PIN    A2
-// default ADC_RESOLUTION=12 for XIAO_M0
-//                        12 for NRF mbed and NRF adafruit core
-//                        12 for rp2040
-//                        12 for ESP32C3 ... not change able
-#if defined(ARDUINO_XIAO_ESP32C3)
-#define MYADCRESOLUTION 12
-#else
-#define MYADCRESOLUTION ADC_RESOLUTION
-#endif
-
-#if defined(ARDUINO_RASPBERRY_PI_PICO) 
-// use XIAO pinout
-//U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/*clock=*/7u, /* data=*/ 6u, /* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-#elif defined(ARDUINO_SEEED_XIAO_RP2040)
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-#elif defined(ARDUINO_XIAO_ESP32C3)
-//0U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-#else
-// use default I2C
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-#endif
 
 
 static bool buzzOn = false;
@@ -100,22 +70,6 @@ static void buttonpush(void) {
 
 
 static void dumpinfo(void) {
-#if defined(ARDUINO_SEEED_XIAO_M0)
-  Serial.println("XIAO_M0");
-#elif defined(ARDUINO_XIAO_ESP32C3)
-  Serial.println("XIAO_ESP32C3");
-#elif defined(ARDUINO_RASPBERRY_PI_PICO)
-  Serial.println("PICO");
-#elif defined(ARDUINO_SEEED_XIAO_RP2040)
-  Serial.println("XIAO_RP2040");
-#elif defined(SEEED_XIAO_NRF52840_SENSE)
-  Serial.println("XIAO_NRF52840_SENSE (mbed)");
-#elif defined(ARDUINO_Seeed_XIAO_nRF52840_Sense)
-  Serial.println("ARDUINO_Seeed_XIAO_nRF52840_Sense adafruit core");
-#else
-  Serial.println("Unknown board");
-#endif
-
   Serial.print("BUTTON_INTERRUPT = ");Serial.print(BUTTON_INTERRUPT);
   Serial.print("   Count=");Serial.println(buttonCt);
   Serial.print("Button Pin: ");Serial.print(BUTTON_PIN);
@@ -125,12 +79,6 @@ static void dumpinfo(void) {
   Serial.print("FALLING=");Serial.println(FALLING);
   Serial.print("LED Pin: ");Serial.println(LED_PIN);
   Serial.print("Buzzer Pin: ");Serial.println(BUZZER_PIN);
-#if defined (ARDUINO_SEEED_XIAO_M0)
-  Serial.print("DAC Pin: ");Serial.print(DAC_PIN);
-  Serial.print("  Resolution: ");Serial.println(DAC_RESOLUTION);
-#else
-  Serial.println("No DAC");
-#endif
   Serial.print("ADC Pin: ");Serial.println(ADC_PIN);
   Serial.print("  Resolution: ");Serial.println(MYADCRESOLUTION);
 }
@@ -140,20 +88,13 @@ void setup() {
   while (!Serial) ;        // ESP32C3 Serial seems up if powered from USB with no terminal pgm connected
   delay(5000);
   Serial.println("setup: Starting up");
+  mcusetup();
 #if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
   portstat();
   for (int i=0;i<12;i++) {
     portregs(i);
   }
   dacstate();
-#endif  
-#if not defined(ARDUINO_XIAO_ESP32C3)
-  pinMode(LED_PIN, OUTPUT);
-#endif
-#if defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
-  pinMode(25, OUTPUT);digitalWrite(25, 1);  // turn off all
-  pinMode(16, OUTPUT);digitalWrite(16, 1);
-  digitalWrite(LED_PIN, 1);
 #endif
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(ADC_PIN, INPUT);  // do not set mode of DAC output  
@@ -163,16 +104,10 @@ void setup() {
   dumpinfo();
 
 #if BUTTON_INTERRUPT
-#if defined(ARDUINO_XIAO_ESP32C3)
+#if defined(ARDUINO_XIAO_ESP32C3) || defined(ARDUINO_XIAO_ESP32S3)
   attachInterrupt(BUTTON_PIN, buttonpush, FALLING);
 #else
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonpush, FALLING);
-#endif
-#endif
-#if not defined(ARDUINO_XIAO_ESP32C3)
-  analogReadResolution(MYADCRESOLUTION);   // should be 12
-#if defined(ARDUINO_SEEED_XIAO_M0)
-  analogWriteResolution(DAC_RESOLUTION);  // should be 10
 #endif
 #endif
   uint32_t defclk = u8x8.getBusClock();
