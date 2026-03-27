@@ -1,0 +1,6 @@
+[submodule "doexpansion/PCF8563-Arduino-Library"]
+	path = doexpansion/PCF8563-Arduino-Library
+	url = https://github.com/ricksorensen/PCF8563-Arduino-Library.git
+[submodule "doexpansion/oledh"]
+	path = doexpansion/oledh
+	url = https://github.com/ricksorensen/oledh.git
