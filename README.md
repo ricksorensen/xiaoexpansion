@@ -38,3 +38,5 @@ $ git clone https://github.com/ricksorensen/xiaoexpansion
 $ git submodule update --init --recursive
 $ git submodule update --remote
 ```
+
+<https://chrisjean.com/git-submodules-adding-using-removing-and-updating/>
