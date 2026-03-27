@@ -17,10 +17,10 @@
 
 #include <Arduino.h>
 #include "playsong.h"
-#include <U8x8lib.h>
+#include <SSD1306.h>
 #include <PCF8563.h>
 PCF8563 pcf;
-#include <Wire.h>
+
 
 #include "xiaosamd.h"
 #include "xiaorp2040.h"
@@ -28,6 +28,8 @@ PCF8563 pcf;
 #include "xiaoesp32c3.h"
 #include "xiaoesp32s3.h"
 #include "xiaonrf52.h"
+
+OLED oled(128,64);
 
 /** Interrupt states:
     M0, RP2040, NRF52840
@@ -82,13 +84,12 @@ static void dumpinfo(void) {
   Serial.print("ADC Pin: ");Serial.println(ADC_PIN);
   Serial.print("  Resolution: ");Serial.println(MYADCRESOLUTION);
 }
-
+//TwoWire myI2C=Wire;
 void setup() {
   Serial.begin(115200);
   while (!Serial) ;        // ESP32C3 Serial seems up if powered from USB with no terminal pgm connected
   delay(5000);
   Serial.println("setup: Starting up");
-  mcusetup();
 #if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
   portstat();
   for (int i=0;i<12;i++) {
@@ -100,7 +101,7 @@ void setup() {
   pinMode(ADC_PIN, INPUT);  // do not set mode of DAC output  
   pinMode(BUZZER_PIN, OUTPUT);
 
-  Wire.begin();
+  //Wire.begin();
   dumpinfo();
 
 #if BUTTON_INTERRUPT
@@ -110,17 +111,15 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonpush, FALLING);
 #endif
 #endif
-  uint32_t defclk = u8x8.getBusClock();
-  // for SEEED XIAO SAMD2, default is 400000
-  // u8x8.setBusClock(100000);
-  u8x8.begin();
-  u8x8.setFlipMode(1);
-  Serial.print("u8x8 bus clock.  Default: ");Serial.print(defclk);
-  defclk = u8x8.getBusClock();
-  Serial.print("    Updated: ");Serial.println(defclk);
-  pcf.init();//initialize the clock
-  Serial.println("pcf.init ... done");
+  TwoWire* myI2C = mcusetup();
+  Serial.print("pcf.init ...");
+  pcf.init(myI2C);
   Time pcfTime = pcf.getTime();//get current time
+  Serial.println("....done \n Starting OLED");
+  oled.setWire(myI2C);
+  oled.begin();
+  Serial.println("Clearing OLED");
+  oled.clearScr();
   // year is a byte- if month bit 7 is set, year 19xx, else (default) is 20xx
   if (pcfTime.year < 20) {
     pcf.stopClock();//stop the clock
@@ -142,7 +141,8 @@ void setup() {
 #endif  
   Serial.println("Enter integer voltage values");
 }
- 
+
+char tstr[20];
 void loop() {
   int newVoltage = -1;
   if (Serial.available()>0) {
@@ -163,40 +163,22 @@ void loop() {
     
   }
   Time nowTime = pcf.getTime();//get current time
-  u8x8.setFont(u8x8_font_chroma48medium8_r);   // choose a suitable font
- 
-  u8x8.setCursor(0, 0);
-  u8x8.print(nowTime.day);
-  u8x8.print("/");
-  u8x8.print(nowTime.month);
-  u8x8.print("/");
-  u8x8.print("20");
-  u8x8.print(nowTime.year);
-  u8x8.setCursor(0, 1);
-  u8x8.print(nowTime.hour);
-  u8x8.print(":");
-  u8x8.print(nowTime.minute);
-  u8x8.print(":");
-  u8x8.print(nowTime.second);
-  
-  u8x8.setCursor(0,2);
-  // digitalWrite(LED_PIN, buttonState);
-  // u8x8.print("BTN: ");u8x8.print(buttonState);
-
+  sprintf(tstr,"%02d/%02d/20%02d",nowTime.day,nowTime.month,nowTime.year); 
+  oled.print(tstr,0,6);
+  sprintf(tstr,"%02d:%02d:%02d",nowTime.hour,nowTime.minute,nowTime.second);
+  oled.print(tstr,0,16);
   if (newVoltage >= 0) {
-    u8x8.setCursor(0,3);
-    u8x8.clearLine(3);
 #if defined(ARDUINO_SEEED_XIAO_M0)
     analogWrite(DAC_PIN, newVoltage);
 #else
     Serial.println("No DAC on this chip");
 #endif
-    u8x8.print("vDAC: ");u8x8.print(newVoltage);
+    sprintf(tstr, "vDAC: %04d",newVoltage);
+    oled.print(tstr,0,26);
   }
-  int adclevel = analogRead(ADC_PIN);
-  u8x8.clearLine(4);
-  u8x8.setCursor(0,4);
-  u8x8.print("  ANLG: ");u8x8.print(adclevel);
+  sprintf(tstr,"  ANLG: %04d",analogRead(ADC_PIN));
+  oled.print(tstr,0,36);
+  oled.inflate();
 #if BUTTON_INTERRUPT
   if (buttonState) {
     buttonState = false;

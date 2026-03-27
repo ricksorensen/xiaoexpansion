@@ -18,9 +18,11 @@ needs significant adaptation for XIAO RP2040 to get I2 working
 - `seeed_xiao_rp2040` for the Seeed XIAO RP2040 using the `earlephilhower` toolset
 preferred option for XIAO 2040
 - `seeed_xiao_rp2350` for the Seeed XIAO RP2350 using the Seeed github 
+- `seeed_xiao_rp2350rv` for the Seeed XIAO RP2350 with RISC-V using the earlephilower 
 - `seeed_xiao_rp2350x` for the Seeed XIAO RP2350 using the `earlephilhower` toolset
 - `sense_future` for the Seeed XIAO NRF52840 Sense- with mbed
 - `sense_future_adafruit` for the Seeed XIAO NRF52840 Sense, bare metal.  Note the Serial1 does not work with this.
+
 
 Plus some others for the curious.
 
@@ -37,7 +39,7 @@ Implementation notes:
    
    See `xiaoxxxx.h` for pin and setup functions for each board.
    
-3. Since currently (20230228) GPS/Network time is not being used, the PCF8563 time is arbitrarily set. 
+3. Originally (20230228) GPS/Network time we not being used, the PCF8563 time is arbitrarily set. 
 4. Arduino libraries used are
 
 ```
@@ -46,7 +48,7 @@ lib_deps =
         https://github.com/Bill2462/PCF8563-Arduino-Library
 		mikalhart/TinyGPSPlus@^1.0.3
 ```
-5. GPS is not currently used
+
 
 
 Pins using arduino/platformio naming. 
@@ -106,3 +108,7 @@ lost bootloader
 
 lost bootloader  
  + sense_future_gps: works no  led,buzzer/sound, display, pfc clock, adc,(no dac) 
+
+Note: 
++ I have not yet gotten sense_future_adafruit (bare-metal) Serial1 to work for GPS. 
++ for RP2350 the standard Rpi2350 config maps xiao default I2C to Wifi1- which doesn't play well with the Arduino apps that use I2S.  To work around this I pulled in simple OLED and RTC libraries and added the ability to set I2C externally and pass to the apps.

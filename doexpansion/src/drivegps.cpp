@@ -16,17 +16,19 @@
 #endif
 #include <Arduino.h>
 #include "playsong.h"
-#include <U8x8lib.h>
 #include <TinyGPSPlus.h>
 #include <PCF8563.h>
 PCF8563 pcf;
-#include <Wire.h>
+
 
 #include "xiaosamd.h"
 #include "xiaorp2040.h"
+#include "xiaorp2350.h"
 #include "xiaoesp32c3.h"
 #include "xiaoesp32s3.h"
 #include "xiaonrf52.h"
+
+OLED oled(128,64);
 
 /** Interrupt states:
     M0, RP2040, NRF52840
@@ -86,13 +88,18 @@ static void getgps(unsigned long mswait) {
   unsigned long start = millis();
   do {
     while (GPSSerial.available() > 0) {
-      char c=GPSSerial.read();Serial.write(c);
+      char c=GPSSerial.read();
+#if defined(GPSDEBUG)      
+      Serial.write(c);
+#endif
       GPS.encode(c);
     }
   } while (millis() - start < mswait);
+#if defined(GPSDEBUG)
   Serial.println();
   Serial.print("  GPS Char Processed: ");Serial.print(GPS.charsProcessed());
   Serial.print("sentwithFix: ");Serial.println(GPS.sentencesWithFix());
+#endif
 }
 
 
@@ -155,7 +162,6 @@ void setup() {
   // GPSSerial.begin(9600);
   Serial.begin(115200);
   while (!Serial) ;        // ESP32C3 Serial seems up if powered from USB with no terminal pgm connected
-  mcusetup();
   delay(5000);
   Serial.println("setup: Starting up");
 #if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
@@ -164,38 +170,30 @@ void setup() {
     portregs(i);
   }
   dacstate();
-#endif  
-
-#if defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_SEEED_XIAO_RP2040)
-  pinMode(25, OUTPUT);digitalWrite(25, 1);  // turn off all
-  pinMode(16, OUTPUT);digitalWrite(16, 1);
-  digitalWrite(LED_PIN, 1);
 #endif
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(ADC_PIN, INPUT);  // do not set mode of DAC output  
   pinMode(BUZZER_PIN, OUTPUT);
 
-  Wire.begin();
+  //Wire.begin();
   dumpinfo();
 
 #if BUTTON_INTERRUPT
-#if defined(ARDUINO_XIAO_ESP32C3)
+#if defined(ARDUINO_XIAO_ESP32C3) || defined(ARDUINO_XIAO_ESP32S3)
   attachInterrupt(BUTTON_PIN, buttonpush, FALLING);
 #else
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonpush, FALLING);
 #endif
 #endif
-  uint32_t defclk = u8x8.getBusClock();
-  // for SEEED XIAO SAMD2, default is 400000
-  // u8x8.setBusClock(100000);
-  u8x8.begin();
-  u8x8.setFlipMode(1);
-  Serial.print("u8x8 bus clock.  Default: ");Serial.print(defclk);
-  defclk = u8x8.getBusClock();
-  Serial.print("    Updated: ");Serial.println(defclk);
-  pcf.init();//initialize the clock
-  Serial.println("pcf.init ... done");
+  TwoWire* myI2C=mcusetup();
+  Serial.print("pcf.init ...");
+  pcf.init(myI2C);
   Time pcfTime = pcf.getTime();//get current time
+  Serial.println("....done \n Starting OLED");
+  oled.setWire(myI2C);
+  oled.begin();
+  Serial.println("Clearing OLED");
+  oled.clearScr();
   // year is a byte- if month bit 7 is set, year 19xx, else (default) is 20xx
   if (pcfTime.year < 20) {
     pcf.stopClock();//stop the clock
@@ -217,7 +215,8 @@ void setup() {
 #endif  
   Serial.println("Enter integer voltage values");
 }
- 
+
+char tstr[20];
 void loop() {
   int newVoltage = -1;
   getgps(LOOP_DELAY);
@@ -239,56 +238,31 @@ void loop() {
     
   }
   Time nowTime = pcf.getTime();//get current time
-  u8x8.setFont(u8x8_font_chroma48medium8_r);   // choose a suitable font
- 
-  u8x8.setCursor(0, 0);
-  u8x8.print(nowTime.day);
-  u8x8.print("/");
-  u8x8.print(nowTime.month);
-  u8x8.print("/");
-  u8x8.print("20");
-  u8x8.print(nowTime.year);
-  u8x8.setCursor(0, 1);
-  u8x8.print(nowTime.hour);
-  u8x8.print(":");
-  u8x8.print(nowTime.minute);
-  u8x8.print(":");
-  u8x8.print(nowTime.second);
-  
+  sprintf(tstr,"rtc %02d/%02d/20%02d",nowTime.day,nowTime.month,nowTime.year); 
+  oled.print(tstr,0,6);
+  sprintf(tstr,"   %02d:%02d:%02d",nowTime.hour,nowTime.minute,nowTime.second);
+  oled.print(tstr,0,16);
   if (GPS.date.isValid()) {
-    u8x8.setCursor(0,2);
-    u8x8.print(GPS.date.day());
-    u8x8.print("/");
-    u8x8.print(GPS.date.month());
-    u8x8.print("/");
-    u8x8.print(GPS.date.year());
+    sprintf(tstr,"gps %02d/%02d/%04d",GPS.date.day(),GPS.date.month(),GPS.date.year());
+    oled.print(tstr,0,26);
   }
   if (GPS.time.isValid()) {
-    u8x8.setCursor(0, 3);
-    u8x8.print(GPS.time.hour());
-    u8x8.print(":");
-    u8x8.print(GPS.time.minute());
-    u8x8.print(":");
-    u8x8.print(GPS.time.second());
+    sprintf(tstr,"   %02d:%02d:%02d",GPS.time.hour(),GPS.time.minute(),GPS.time.second());
+    oled.print(tstr,0,36);
   }
-  
-  // digitalWrite(LED_PIN, buttonState);
-  // u8x8.print("BTN: ");u8x8.print(buttonState);
 
   if (newVoltage >= 0) {
-    u8x8.setCursor(0,5);
-    u8x8.clearLine(5);
 #if defined(ARDUINO_SEEED_XIAO_M0)
     analogWrite(DAC_PIN, newVoltage);
 #else
     Serial.println("No DAC on this chip");
 #endif
-    u8x8.print("vDAC: ");u8x8.print(newVoltage);
+    sprintf(tstr, "vDAC: %04d",newVoltage);
+    oled.print(tstr,0,46);
   }
-  int adclevel = analogRead(ADC_PIN);
-  u8x8.clearLine(6);
-  u8x8.setCursor(0,6);
-  u8x8.print("  ANLG: ");u8x8.print(adclevel);
+  sprintf(tstr,"  ANLG: %04ul",analogRead(ADC_PIN));
+  oled.print(tstr,0,56);
+  oled.inflate();
 #if BUTTON_INTERRUPT
   if (buttonState) {
     buttonState = false;

@@ -1,6 +1,7 @@
 #if defined(ARDUINO_Seeed_XIAO_nRF52840_Sense) || defined(SEEED_XIAO_NRF52840_SENSE)
 
 #include <Arduino.h>
+#include <SSD1306.h>
 
 // Serial does not seem to work with bare-metal, needs mbed
 #define GPSSerial Serial1
@@ -11,10 +12,10 @@
 #define ADC_PIN A2
 #define MYADCRESOLUTION 12
 
-// use default I2C
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
 
-inline static void mcusetup(void) {
+inline static TwoWire* mcusetup(void) {
+  Wire.begin();
+  Wire.setClock(400000);
   GPSSerial.begin(9600);
   //analogReadResolution(MYADCRESOLUTION);
 #if defined(SEEED_XIAO_NRF52840_SENSE) 
@@ -22,5 +23,6 @@ inline static void mcusetup(void) {
 #else
   Serial.println("ARDUINO_Seeed_XIAO_nRF52840_Sense adafruit core");
 #endif
+  return &Wire;
 }
 #endif
