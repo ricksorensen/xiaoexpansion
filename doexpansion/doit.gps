@@ -1,0 +1,27 @@
+#pio run -t cleanall
+echo "build seeed_xiao gps ..."
+pio run -e seeed_xiao_gps &>build.seeed_xiao_gps
+echo "build seeed_xiao_esp32c3 gps ..."
+pio run -e seeed_xiao_esp32c3_gps &>build.seeed_xiao_esp32c3_gps
+echo "build seeed_xiao_esp32s3 gps ..."
+pio run -e seeed_xiao_esp32s3_gps &>build.seeed_xiao_esp32s3_gps
+#echo "build pico gps ..."
+#pio run -e pico_gps &>build.pico_gps
+
+# using seeed config
+echo "build seeed_xiao_rp2350 gps ..."
+pio run -e seeed_xiao_rp2350_gps &>build.seeed_xiao_rp2350_gps
+
+# using earlphilhower
+echo "build seeed_xiao_rp2040 gps ..."
+pio run -e seeed_xiao_rp2040_gps &>build.seeed_xiao_rp2040_gps
+echo "build seeed_xiao_rp2350x gps ..."
+pio run -e seeed_xiao_rp2350x_gps &>build.seeed_xiao_rp2350x_gps
+
+echo "build seeed_xiao_rp2350rv (risc-v) gps..."
+pio run -e seeed_xiao_rp2350rv_gps &>build.seeed_xiao_rp2350rv_gps
+
+# baremetal adafruit does not have Serial1 
+echo "build sense_future gps ..."
+pio run -e sense_future_gps &>build.sense_future_gps
+

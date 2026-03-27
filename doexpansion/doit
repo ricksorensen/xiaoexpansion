@@ -5,16 +5,22 @@ echo "build seeed_xiao_esp32c3 ..."
 pio run -e seeed_xiao_esp32c3 &>build.seeed_xiao_esp32c3
 echo "build seeed_xiao_esp32s3 ..."
 pio run -e seeed_xiao_esp32s3 &>build.seeed_xiao_esp32s3
-echo "build pico ..."
-pio run -e pico &>build.pico
-echo "build seeed_xiao_rp2040 ..."
-pio run -e seeed_xiao_rp2040 &>build.seeed_xiao_rp2040
+#echo "build pico ..."
+#pio run -e pico &>build.pico
+
+# using seeed config
 echo "build seeed_xiao_rp2350 ..."
 pio run -e seeed_xiao_rp2350 &>build.seeed_xiao_rp2350
+
+# using earlphilhower
+echo "build seeed_xiao_rp2040 ..."
+pio run -e seeed_xiao_rp2040 &>build.seeed_xiao_rp2040
 echo "build seeed_xiao_rp2350x ..."
 pio run -e seeed_xiao_rp2350x &>build.seeed_xiao_rp2350x
+
 echo "build seeed_xiao_rp2350rv (risc-v) ..."
 pio run -e seeed_xiao_rp2350rv &>build.seeed_xiao_rp2350rv
+
 echo "build sense_future ..."
 pio run -e sense_future &>build.sense_future
 echo "build sense_future_adafruit ..."
