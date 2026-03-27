@@ -21,3 +21,20 @@ the micropython external modules used are
 
 - `ssd1306` from `micropython-lib`
 - `pcf8563` from `https://github.com/sshahryiar/Raspberry-Pi-PICO---RP2040/blob/main/DVK511%20-%20PCF8563%20RTCC/PCF8563.py` renamed as `pcfsimp.py`
+
+
+```
+$ git clone --recurse-submodules https://github.com/ricksorensen/xiaoexpansion
+$ git submodule update --remote
+```
+or
+```
+$ git clone --recurse-submodules https://github.com/ricksorensen/xiaoexpansion
+$ git submodule update --remote
+```
+or
+```
+$ git clone https://github.com/ricksorensen/xiaoexpansion
+$ git submodule update --init --recursive
+$ git submodule update --remote
+```
