@@ -176,7 +176,7 @@ void loop() {
     sprintf(tstr, "vDAC: %04d",newVoltage);
     oled.print(tstr,0,26);
   }
-  sprintf(tstr,"  ANLG: %04d",analogRead(ADC_PIN));
+  sprintf(tstr,"  ANLG: %04u",analogRead(ADC_PIN));
   oled.print(tstr,0,36);
   oled.inflate();
 #if BUTTON_INTERRUPT
