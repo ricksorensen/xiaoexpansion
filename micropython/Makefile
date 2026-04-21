@@ -12,7 +12,7 @@ MP_PORT=
 #   0 if not installed.  
 MP_SSD1306=1
 
-# mcu:  options are samd, rp2, esp32, nrf
+# mcu:  options are samd, rp2, esp32, nrf, zephyr
 MP_MCU=samd
 MCULIB=xiao$(MP_MCU).mpy
 $(info  "MCU import: $(MCULIB)")
@@ -28,10 +28,15 @@ ifeq "$(MP_MCU)" "nrf"
 else
 	MYLIBS += $(ALLTIME)
 endif
+ifeq "$(MP_MCU)" "zephyr"
+	RUN = expansionzephyr.mpy
+else
+	RUN = expansion.mpy  # help out SAMD21 
+endif
+
 SYSLIBS = ssd1306    # assumed installed on mcu - either frozen or as lib
 
 
-RUN = expansion.mpy  # help out SAMD21 
 
 %.mpy: libs/%.py
 	mpy-cross -o $@ $<
@@ -61,7 +66,7 @@ help:
 	echo "Expansion board micropython tests"
 	echo "upload:  default target, load python files to mcu"
 	echo "         MP_PORT port to use default $(MP_PORT)"
-	echo "         MP_MCU mcu to use (samd, rp2, esp32,nrf) default $(MP_MCU)"
+	echo "         MP_MCU mcu to use (samd, rp2, esp32,nrf,zephyr) default $(MP_MCU)"
 	echo "run: run expansion module"
 ##### RP2
 # mpremote $(MP_PORT) --target lib install ssd1306
