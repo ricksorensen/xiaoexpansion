@@ -12,7 +12,7 @@ import sys
 adc = None
 pf = sys.platform
 rtc = None
-if pf == "nrf52":
+if "nrf" in pf:  # was nrf52
     import alltime_nrf as alltime
     import xiaonrf as mcu
 else:
