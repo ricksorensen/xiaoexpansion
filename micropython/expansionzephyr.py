@@ -17,6 +17,9 @@ if pf == "zephyr":
     import xiaozephyr as mcu
 
     adc = mcu.adc
+elif "nrf" in pf:         # was nrf52
+    import alltime_nrf as alltime
+    import xiaonrf as mcu
 else:
     import alltime
 
