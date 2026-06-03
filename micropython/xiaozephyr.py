@@ -37,5 +37,5 @@ adc = machine.ADC(("adc", 4))
 # pin is instance of machine.Pin
 def buzzpwm(pin):
     # pwm = machine.PWM(pin, freq=440, duty_u16=0)
-    pwm = machine.PWM(("pwm0", 1), freq=440, duty_u16=0)
+    pwm = machine.PWM(("pwm0", 29), freq=440, duty_u16=0)
     return pwm
