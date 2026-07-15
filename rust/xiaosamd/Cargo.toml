@@ -1,0 +1,76 @@
+[package]
+name = "xiao_i2c"
+version = "0.1.1"
+description = "Board support crate for the Seeed Studio Seeeduino XIAO"
+keywords = ["no-std", "arm", "cortex-m", "embedded-hal"]
+categories = ["embedded", "hardware-support", "no-std"]
+license = "MIT OR Apache-2.0"
+edition = "2024"
+
+#xiao_m0 ??? 0.13.0
+[dependencies.cortex-m-rt]
+version = "0.7"
+optional = true
+
+[dependencies.atsamd-hal]
+version = "0.23"
+default-features = false
+
+[dependencies.usb-device]
+version = "0.3.2"
+optional = true
+
+# ssd1306 v 0.9.0 and up  uses embedded-hal 1.0, while 0.8 use 0.2.4
+#   that breaks compile of shared i2c examples
+# mpu6050 uses embedded-hal 0.2.4 all versions
+# pcf8563 v0.2.1uses embedded-hal 1.0.0 , v0.1.2 uses 0.2
+# cortex-m use embedded-hal 0.2
+# shared-bus use embedded-hal 0.2
+[dev-dependencies]
+embedded-hal-bus = "0.3"
+cortex-m = { version = "0.7", features = ["critical-section-single-core"] }
+usbd-serial = "0.2"
+panic-halt = "0.2"
+
+# v0.10.0 has a problem in the write_str command that has been patched
+#         but as of 20260715 not released to crate.io
+#         use a local version
+ssd1306 = { path = "/home/rick/work/rust/ssd1306" }
+embedded-graphics = "0.8"
+mpu6050 = "0.1.4"
+
+# to use embedded-hal-bus need v0.2+
+pcf8563 = "0.2"
+
+# for embedded-hal 0.27
+# shared-bus = "0.3.1"
+
+[features]
+default = ["rt", "atsamd-hal/samd21g"]
+rt = ["cortex-m-rt", "atsamd-hal/samd21g-rt"]
+usb = ["atsamd-hal/usb", "usb-device"]
+
+[[example]]
+name = "blink"
+
+[[example]]
+name = "eic"
+
+[[example]]
+name = "shared_i2c"
+
+[[example]]
+name = "ssd1306_i2c"
+
+[[example]]
+name = "usb_echo"
+required-features = ["usb"]
+
+[[example]]
+name = "usb_serial"
+required-features = ["usb"]
+
+# for cargo flash
+[package.metadata]
+chip = "ATSAMD21G18A"
+
