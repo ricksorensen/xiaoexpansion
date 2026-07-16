@@ -3,7 +3,7 @@
 
 extern crate panic_halt;
 
-use core::fmt::{self, Write};
+use core::fmt::{Write};
 
 use hal::{clock::GenericClockController, delay::Delay, prelude::*, time::Hertz};
 use pac::{CorePeripherals, Peripherals};
@@ -13,7 +13,7 @@ use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 use pcf8563::*;
 
 use bsp::{entry, hal, pac};
-use xiao_i2c as bsp;
+use xiaosamd as bsp;
 
 #[entry]
 fn main() -> ! {
@@ -39,8 +39,8 @@ fn main() -> ! {
         pins.a5,
     );
     let i2c_bus = RefCell::new(i2c);
-    let mut dispi2c = RefCellDevice::new(&i2c_bus);
-    let mut clki2c = RefCellDevice::new(&i2c_bus);
+    let dispi2c = RefCellDevice::new(&i2c_bus);
+    let clki2c = RefCellDevice::new(&i2c_bus);
 
     let interface = I2CDisplayInterface::new(dispi2c);
     let mut display =

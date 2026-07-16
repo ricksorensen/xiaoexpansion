@@ -1,99 +1,78 @@
 #![no_std]
 #![no_main]
 
-#[cfg(not(feature = "use_semihosting"))]
+//! USB CDC example for the Adafruit QT Py board. Demonstrates creating a USB
+//! CDC ACM serial port accessible over the on-board USB-C connector.
+
 use panic_halt as _;
-#[cfg(feature = "use_semihosting")]
-use panic_semihosting as _;
 
-use cortex_m::{asm::delay as asm_delay, peripheral::NVIC};
-use hal::{clock::GenericClockController, prelude::*, usb::UsbBus};
-use pac::{interrupt, CorePeripherals, Peripherals};
-use usb_device::{bus::UsbBusAllocator, prelude::*};
-use usbd_serial::{SerialPort, USB_CLASS_CDC};
+use usb_device::prelude::*;
+use usbd_serial::SerialPort;
+use usbd_serial::USB_CLASS_CDC;
 
-use bsp::{entry, hal, pac, Led0, Led1};
-use usb_device::prelude::UsbDeviceBuilder;
-use xiao_i2c as bsp;
+use hal::usb::UsbBus;
+use usb_device::bus::UsbBusAllocator;
+
+use bsp::hal;
+use bsp::pac;
+
+use bsp::entry;
+use hal::clock::GenericClockController;
+use pac::Peripherals;
+use xiaosamd as bsp;
 
 #[entry]
 fn main() -> ! {
     let mut peripherals = Peripherals::take().unwrap();
-    let mut core = CorePeripherals::take().unwrap();
     let mut clocks = GenericClockController::with_internal_32kosc(
         peripherals.gclk,
         &mut peripherals.pm,
         &mut peripherals.sysctrl,
         &mut peripherals.nvmctrl,
     );
-    let pins = bsp::Pins::new(peripherals.port);
-    let bus_allocator = unsafe {
-        USB_ALLOCATOR = Some(bsp::usb_allocator(
-            peripherals.usb,
-            &mut clocks,
-            &mut peripherals.pm,
-            pins.usb_dm,
-            pins.usb_dp,
-        ));
-        USB_ALLOCATOR.as_ref().unwrap()
-    };
 
-    unsafe {
-        USB_SERIAL = Some(SerialPort::new(bus_allocator));
-        USB_BUS = Some(
-            UsbDeviceBuilder::new(&bus_allocator, UsbVidPid(0xdead, 0xbeef))
-                .strings(&[usb_device::device::StringDescriptors::default()
-                    .manufacturer("Hackers University")
-                    .product("xiao_usb_echo")
-                    .serial_number("42")])
-                .unwrap()
-                .device_class(USB_CLASS_CDC)
-                .build(),
-        );
-        LED_DATA = Some(pins.led1.into_mode());
-    }
+//  from qt_m0 lib.rs:
+// split create struct that has
+// .usb: Usb { dm, dp }
+//       Usb.init(Usb,clocks,pm) returns busallocator
+//     let gclk0 = clocks.gclk0();
+//     let usb_clock = &clocks.usb(&gclk0).unwrap()
+//     UsbBusAllocator::new(UsbBus::new(usb_clock,pm,pins.usb_dm,pins.usb_dp,peripherals.usb)
 
-    unsafe {
-        core.NVIC.set_priority(interrupt::USB, 1);
-        NVIC::unmask(interrupt::USB);
-    }
+    let pins = bsp::Pins::new(peripherals.port);   // oringall .split();
+    let gclk0 = clocks.gclk0();
+    let usb_clock = &clocks.usb(&gclk0).unwrap();
+    let usb_bus = UsbBusAllocator::new(UsbBus::new(
+        usb_clock,
+	&mut peripherals.pm,
+	pins.usb_dm,
+	pins.usb_dp,
+	peripherals.usb,
+    ));
+    
 
-    // Flash the LED in a spin loop to demonstrate
-    // that USB is entirely interrupt driven.
-    let mut led_loop: Led0 = pins.led0.into_push_pull_output();
+    // let usb_bus = pins
+    //     .usb
+    //     .init(peripherals.usb, &mut clocks, &mut peripherals.pm);
+
+    let mut serial = SerialPort::new(&usb_bus);
+    let mut usb_device = UsbDeviceBuilder::new(&usb_bus, UsbVidPid(0x239a, 0x00cb))
+        .strings(&[StringDescriptors::new(LangID::EN)
+            .manufacturer("Fake company")
+            .product("Serial port")
+            .serial_number("TEST")])
+        .expect("Failed to set strings")
+        .device_class(USB_CLASS_CDC)
+        .build();
+
     loop {
-        asm_delay(15 * 1024 * 1024);
-        led_loop.toggle().unwrap();
+        if !usb_device.poll(&mut [&mut serial]) {
+            continue;
+        }
+
+        let mut buf = [0u8; 64];
+        if let Ok(count) = serial.read(&mut buf) {
+            let _ = serial.write(&buf[..count]);
+        }
     }
-}
-
-static mut USB_ALLOCATOR: Option<UsbBusAllocator<UsbBus>> = None;
-static mut USB_BUS: Option<UsbDevice<UsbBus>> = None;
-static mut USB_SERIAL: Option<SerialPort<UsbBus>> = None;
-static mut LED_DATA: Option<Led1> = None;
-
-fn poll_usb() {
-    unsafe {
-        USB_BUS.as_mut().map(|usb_dev| {
-            USB_SERIAL.as_mut().map(|serial| {
-                usb_dev.poll(&mut [serial]);
-                let mut buf = [0u8; 64];
-
-                if let Ok(count) = serial.read(&mut buf) {
-                    for (i, c) in buf.iter().enumerate() {
-                        if i >= count {
-                            break;
-                        }
-                        serial.write(&[c.clone()]).unwrap();
-                        LED_DATA.as_mut().map(|led| led.toggle());
-                    }
-                };
-            });
-        });
-    };
-}
-
-#[interrupt]
-fn USB() {
-    poll_usb();
 }

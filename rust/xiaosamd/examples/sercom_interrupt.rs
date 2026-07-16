@@ -21,7 +21,7 @@
 use panic_halt as _;
 #[cfg(feature = "use_semihosting")]
 use panic_semihosting as _;
-use xiao_i2c as bsp;
+use xiaosamd as bsp;
 
 use bsp::{entry, A4Sercom0Pad0, A5Sercom0Pad1};
 use core::cell::RefCell;

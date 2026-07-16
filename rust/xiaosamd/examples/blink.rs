@@ -7,7 +7,7 @@ use hal::{clock::GenericClockController, delay::Delay, prelude::*};
 use pac::{CorePeripherals, Peripherals};
 
 use bsp::{entry, hal, pac, Led0};
-use xiao_i2c as bsp;
+use xiaosamd as bsp;
 
 #[entry]
 fn main() -> ! {

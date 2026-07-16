@@ -22,7 +22,7 @@ use hal::{
     prelude::*,
 };
 use panic_halt as _;
-use xiao_i2c as bsp;
+use xiaosamd as bsp;
 
 static LED_1: Mutex<RefCell<Option<Led1>>> = Mutex::new(RefCell::new(None));
 
@@ -38,7 +38,7 @@ fn main() -> ! {
     );
 
     // setup Pins, red status LED, LED to toggle, and button to toggle the led
-    let pins = xiao_i2c::Pins::new(peripherals.port);
+    let pins = xiaosamd::Pins::new(peripherals.port);
     let mut status_led: Led0 = pins.led0.into();
     free(|cs| LED_1.borrow(cs).replace(Some(pins.led1.into())));
     let button_a9: Pin<_, PullUpInterrupt> = pins.a9.into();

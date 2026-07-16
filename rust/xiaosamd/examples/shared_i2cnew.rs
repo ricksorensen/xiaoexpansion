@@ -11,7 +11,7 @@ use pac::{CorePeripherals, Peripherals};
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 use bsp::{entry, hal, pac};
-use xiao_m0_new as bsp;
+use xiaosamd as bsp;
 
 #[entry]
 fn main() -> ! {

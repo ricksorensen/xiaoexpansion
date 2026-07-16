@@ -1,5 +1,5 @@
 [package]
-name = "xiao_i2c"
+name = "xiaosamd"
 version = "0.1.1"
 description = "Board support crate for the Seeed Studio Seeeduino XIAO"
 keywords = ["no-std", "arm", "cortex-m", "embedded-hal"]
