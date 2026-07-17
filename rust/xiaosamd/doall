@@ -1,20 +1,11 @@
-echo "++++ cargo build --release --example blink ++++"
-cargo build --release --example blink
-echo "++++ cargo build --release --example eic ++++"
-cargo build --release --example eic
-echo "++++ cargo build --release --example sercom_interrupt ++++"
-cargo build --release --example sercom_interrupt
 echo "++++ cargo build --release --example shared_i2c ++++"
-cargo build --release --example shared_i2c
-echo "++++ cargo build --release --example shared_str ++++"
-cargo build --release --example shared_str
+echo "     shared_i2c needs older versions of hal."
+#cargo build --release --example shared_i2c
 echo "++++ cargo build --release --example shared_i2c_rtc ++++"
 cargo build --release --example shared_i2c_rtc
 echo "++++ cargo build --release --example ssd1306_i2c ++++"
 cargo build --release --example ssd1306_i2c
 echo "++++ cargo build  --features="usb" --release --example usb_echo ++++"
 cargo build  --features="usb" --release --example usb_echo
-echo "++++ cargo build ---features="usb" -release --example usb_serial ++++"
-cargo build --features="usb" --release --example usb_serial
 echo "dependencies"
 cargo tree
