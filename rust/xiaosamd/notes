@@ -1,0 +1,22 @@
++   examples/blink.rs
+    examples/eic.rs
+             Looks like we need to update for new hals
++   examples/sercom_interrupt.rs
+             warnings on semihosting
+    examples/shared_i2c.rs     older embedded-hal 
+             older embedded-hal for sharing
++   examples/shared_str.rs
+             unused and mut warning
++   examples/shared_i2c_rtc.rs
+             no field hour and datetime  change to hours
++   examples/ssd1306_i2c.rs
+    examples/usb_echo.rs
+             warnings on semihosting
+	     error shared ref to mutable static
+    examples/usb_serial.rs
+             unddefined Usb
+
+
+examples/xiao_i2c_adc
+     seems to have problems reliably starting from applying power- a reset seems to fix
+
