@@ -2,9 +2,16 @@ import time
 
 
 def setPCF(pcf, gpstime):
-    pcf.set(
-        gpstime[3], gpstime[4], gpstime[5], 0, gpstime[2], gpstime[1], gpstime[0] % 100
-    )
+    if pcf is not None:
+        pcf.set(
+            gpstime[3],
+            gpstime[4],
+            gpstime[5],
+            0,
+            gpstime[2],
+            gpstime[1],
+            gpstime[0] % 100,
+        )
 
 
 # samd takes 7 - tuple
@@ -36,7 +43,7 @@ class AllTime:
         gt = self.getGPSTime(waittime=waittime)
         if gt:
             setPCF(self.pcf, gt)
-        else:
+        elif self.pcf is not None:
             pt = self.pcf.get()
             if pt[6] > 20 and pt[6] < 30:
                 gt = [pt[6] + 2000, pt[5], pt[4], pt[0], pt[1], pt[2]]
