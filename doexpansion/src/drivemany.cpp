@@ -14,6 +14,10 @@
 #if !defined(SAMD_REG_DUMP)
 #define SAMD_REG_DUMP 0
 #endif
+#if !defined(SAMD_DUMP_INIT)
+#define SAMD_DUMP_INIT 0
+#endif
+
 
 #include <Arduino.h>
 #include "playsong.h"
@@ -132,7 +136,9 @@ void setup() {
   }
   pcf.startClock();//start the clock
   Serial.println("pcf.startClock() ... done");
-#if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
+#if defined(ARDUINO_SEEED_XIAO_M0) && SAMD_DUMP_INIT
+  dumpAllregs();
+#elif defined(ARDUINO_SEEED_XIAO_M0) && SAMD_REG_DUMP
   portstat();
   for (int i=0;i<12;i++) {
     portregs(i);

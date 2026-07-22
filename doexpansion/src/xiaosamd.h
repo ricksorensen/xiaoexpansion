@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <SSD1306.h>
 
-#if SAMD_REG_DUMP
+#if SAMD_REG_DUMP || SAMD_DUMP_INIT
 #include <checkregs.h>
 #endif
 
