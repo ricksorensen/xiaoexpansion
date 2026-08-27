@@ -19,7 +19,6 @@ class StdinQuery:
         self._kpoll = None
 
     def init(self, useSelect=None):
-        global _use_stdin_query
         self._kpoll = None
         if useSelect is None:
             useSelect = _use_stdin_query

@@ -1,19 +1,21 @@
-import machine
-import time
-import querystdin
 import gc
+import sys
+import time
 
 # import buzzsong
 import buzzrainbow as buzztune
-import ssd1306
+import machine
 import pcfsimp
-import sys
+import ssd1306
+
+import querystdin
 
 adc = None
 pf = sys.platform
 rtc = None
 if "nrf" in pf:  # was nrf52
     import alltime_nrf as alltime
+
     import xiaonrf as mcu
 else:
     import alltime
@@ -84,8 +86,7 @@ def getVoltage(strin, maxv):
             if not strin[ix].isdigit():
                 break
         rv = int(strin[i0:ix])
-        if rv > maxv:
-            rv = maxv
+        rv = min(rv, maxv)
     return rv
 
 

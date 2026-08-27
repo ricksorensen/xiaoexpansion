@@ -15,7 +15,8 @@ SIGNAL_USEGPS = "A9_D9"
 
 # I2CSCL = "A5_D5"
 # I2CSDA = "A4_D4"
-# i2c = machine.I2C(0,scl=machine.Pin("A5_D5"), sda=machine.Pin("A4_D4"), freq=_SAMD_I2C_FREQ)
+# i2c = machine.I2C(0,scl=machine.Pin("A5_D5"), sda=machine.Pin("A4_D4"),
+#                   freq=_SAMD_I2C_FREQ)
 #       note hardware I2C does not have timeout parametet
 i2c = machine.SoftI2C(
     scl=machine.Pin("A5_D5"),
@@ -45,7 +46,7 @@ def buzzpwm(pin):
 #          65536 = VDD
 try:
     adc = machine.ADC(machine.Pin(ADC_PIN), vref=2, attenu=True)  # RJS mod adds attenu
-except Exception:
+except TypeError:  # unexpected keyword argument
     adc = machine.ADC(machine.Pin(ADC_PIN), vref=2)  # RJS mod adds attenu
 
 # vref = 3 uses external AREF PA03.  Must remember to set PA03 as output and

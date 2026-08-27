@@ -11,7 +11,7 @@ def setPCF(pcf, gpstime):
             gpstime[2],
             gpstime[1],
             gpstime[0] % 100,
-    )
+        )
 
 
 # samd takes 7 - tuple
@@ -64,27 +64,26 @@ class AllTime:
             while tryagain:
                 parts = str(self.gpsUart.readline()).split(",")
                 # print(parts)
-                if ("RMC" in parts[0]) and (len(parts) >= 10):
-                    if parts[1] and parts[9]:
-                        try:
-                            # day-mon-yr
-                            GPSdate = [
-                                int(parts[9][4:6]) + 2000,
-                                int(parts[9][2:4]),
-                                int(parts[9][0:2]),
-                            ]
-                            # hr:min:sec (GMT)
-                            GPStime = [
-                                int(parts[1][0:2]),
-                                int(parts[1][2:4]),
-                                int(parts[1][4:6]),
-                            ]
-                            GPSdate.extend(GPStime)
-                            print("GPS ", GPSdate)
-                            return GPSdate
-                        except ValueError:
-                            print("Bad RMC line")
-                            print(parts)
+                if ("RMC" in parts[0]) and (len(parts) >= 10) and parts[1] and parts[9]:
+                    try:
+                        # day-mon-yr
+                        GPSdate = [
+                            int(parts[9][4:6]) + 2000,
+                            int(parts[9][2:4]),
+                            int(parts[9][0:2]),
+                        ]
+                        # hr:min:sec (GMT)
+                        GPStime = [
+                            int(parts[1][0:2]),
+                            int(parts[1][2:4]),
+                            int(parts[1][4:6]),
+                        ]
+                        GPSdate.extend(GPStime)
+                        print("GPS ", GPSdate)
+                        return GPSdate
+                    except ValueError:
+                        print("Bad RMC line")
+                        print(parts)
                 tryagain = time.time() <= timeout
                 time.sleep_ms(100)
                 print(".", end="")

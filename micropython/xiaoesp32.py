@@ -13,8 +13,8 @@ SIGNAL_USEGPS = 9  # GPIO 9 for D9
 # I2CSCL =  7
 # I2CSDA = "6
 i2c = machine.I2C(0, scl=machine.Pin(7), sda=machine.Pin(6), freq=1000000)
-#
-#
+
+
 uart = machine.UART(
     1,
     tx=21,  # pin number, not machine.Pin
